@@ -1,0 +1,18 @@
+!!!
+%html
+  %head
+    %title Sti
+    = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
+    = javascript_include_tag 'application', 'data-turbolinks-track' => true
+    = csrf_meta_tags
+  %body
+    .row
+      = render :partial => "layouts/header"
+    .row
+      .col-md-10
+        = render :partial => "layouts/flash_messages"
+        = yield
+      .col-md-2
+        = render :partial => "layouts/sidebar"
+    .row
+      = render :partial => "layouts/footer"
