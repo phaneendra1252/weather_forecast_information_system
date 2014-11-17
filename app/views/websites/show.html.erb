@@ -1,0 +1,25 @@
+<% title "Website" %>
+
+<p>
+  <strong>Name:</strong>
+  <%=h @website.name %>
+</p>
+
+<ol>
+<% for question in @website.questions %>
+  <li>
+    <%=h question.content %>
+    <ul>
+    <% for answer in question.answers %>
+      <li><%=h answer.content %></li>
+    <% end %>
+    </ul>
+  </li>
+<% end %>
+</ol>
+
+<p>
+  <%= link_to "Edit", edit_website_path(@website) %> |
+  <%= link_to "Destroy", @website, :confirm => 'Are you sure?', :method => :delete %> |
+  <%= link_to "View All", websites_path %>
+</p>

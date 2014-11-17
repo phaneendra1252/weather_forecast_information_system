@@ -15,6 +15,10 @@ class WebsitesController < ApplicationController
 
   def new
     @website = Website.new
+    3.times do
+      question = @website.questions.build
+      4.times { question.answers.build }
+    end
     respond_with(@website)
   end
 
@@ -43,6 +47,6 @@ class WebsitesController < ApplicationController
     end
 
     def website_params
-      params.require(:website).permit(:name)
+      params.require(:website).permit(:name, :_destroy, questions_attributes: [:id, :_destroy, :content, answers_attributes: [:id, :_destroy, :content]])
     end
 end
