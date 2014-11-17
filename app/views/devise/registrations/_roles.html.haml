@@ -1,0 +1,7 @@
+.form-group
+  = f.label :roles
+  %br
+  - for role in roles
+    = check_box_tag "user[role_ids][]", role.id, f.object.roles.include?(role)
+    = f.label role.name.humanize
+    %br

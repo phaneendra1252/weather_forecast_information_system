@@ -1,0 +1,29 @@
+.panel.panel-default
+  .panel-heading
+    .panel-title
+      .row
+        .col-md-4
+          Edit #{@user.name.to_s.humanize}
+        .col-md-8
+          .pull-right
+            = link_to "Back", "/users", class: "btn btn-info active"
+  .panel-body
+    = form_for(@user, :html => { :method => :put, :role => "form" }) do |f|
+      = render 'shared/error_messages', { object: @user }
+      .form-group
+        = f.label :email
+        %br
+        = f.email_field :email, :autofocus => true, :disabled => true
+      .form-group
+        = f.label :name
+        %br
+        = f.text_field :name, :autofocus => true
+      - if can? :create, User
+        = render 'devise/registrations/roles', { roles: @roles, f: f }
+      .actions
+        = f.submit "Update", :class => "btn btn-success"
+  .panel-footer
+    .row
+      .pull-right
+        - if can? :destroy, @user
+          = button_to "Cancel my account", user_path(@user.id), :data => { :confirm => "Are you sure?" }, :method => :delete, class: "btn btn-danger"

@@ -1,5 +1,4 @@
-- flash.each do |name, msg|
-  - if msg.is_a?(String)
-    %div{class: "alert alert-#{name == :notice ? "success" : "danger"}"}
-      %button.close{"aria-hidden" => "true", "data-dismiss" => "alert", type: "button"} ×
-      = content_tag :div, msg, :id => "flash_#{name}"
+- flash.each do |type, message|
+  %div{class: "alert #{bootstrap_class_for(type)} fade in"}
+    %button.close{"data-dismiss" => "alert"} ×
+    = message
