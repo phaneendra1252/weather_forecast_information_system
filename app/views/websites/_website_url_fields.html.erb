@@ -1,0 +1,11 @@
+<div class="fields">
+  <p>
+    <%= f.label :url, "Website Url" %>
+    <%= link_to_remove_fields "remove", f %><br />
+    <%= f.text_field :url %>
+  </p>
+  <%= f.fields_for :webpage_elements do |builder| %>
+    <%= render 'webpage_element_fields', :f => builder %>
+  <% end %>
+  <p><%= link_to_add_fields "Add a Webpage Element", f, :webpage_elements, "btn btn-primary", "Add a new Webpage Element" %></p>
+</div>

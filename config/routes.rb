@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :parameters
   devise_for :users, controllers: {registrations: "users/registrations", sessions: "sessions"}
   resources :websites, :roles
   resources :users, only: [:index, :edit, :new, :create, :update, :destroy]

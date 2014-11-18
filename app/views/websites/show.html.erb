@@ -6,12 +6,12 @@
 </p>
 
 <ol>
-<% for question in @website.questions %>
+<% for website_url in @website.website_urls %>
   <li>
-    <%=h question.content %>
+    <%=h website_url.url %>
     <ul>
-    <% for answer in question.answers %>
-      <li><%=h answer.content %></li>
+    <% for webpage_element in website_url.webpage_elements %>
+      <li><%=h webpage_element.dom_path %></li>
     <% end %>
     </ul>
   </li>

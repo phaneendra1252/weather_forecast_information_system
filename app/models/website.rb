@@ -1,4 +1,4 @@
 class Website < ActiveRecord::Base
-  has_many :questions, :dependent => :destroy
-  accepts_nested_attributes_for :questions, :reject_if => lambda { |a| a[:content].blank? }, :allow_destroy => true
+  has_many :website_urls, :dependent => :destroy
+  accepts_nested_attributes_for :website_urls, :reject_if => lambda { |a| a[:url].blank? }, :allow_destroy => true
 end

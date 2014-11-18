@@ -11,18 +11,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141116151727) do
+ActiveRecord::Schema.define(version: 20141118145338) do
 
-  create_table "answers", force: true do |t|
-    t.integer  "question_id"
-    t.string   "content"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
-  create_table "questions", force: true do |t|
-    t.integer  "website_id"
-    t.text     "content"
+  create_table "parameters", force: true do |t|
+    t.string   "name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -55,6 +47,21 @@ ActiveRecord::Schema.define(version: 20141116151727) do
   create_table "users_roles", force: true do |t|
     t.integer  "user_id"
     t.integer  "role_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "webpage_elements", force: true do |t|
+    t.integer  "website_url_id"
+    t.integer  "parameter_id"
+    t.string   "dom_path"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "website_urls", force: true do |t|
+    t.integer  "website_id"
+    t.string   "url"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
