@@ -1,0 +1,45 @@
+<h1>Listing imd_aws_data</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Sr no</th>
+      <th>State name</th>
+      <th>Station name</th>
+      <th>Parse date</th>
+      <th>Time utc</th>
+      <th>Latitude n</th>
+      <th>Longitude e</th>
+      <th>Slp hpa</th>
+      <th>Mslp hpa</th>
+      <th>Rainfall mm</th>
+      <th>Temperature deg c</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @imd_aws_data.each do |imd_aws_datum| %>
+      <tr>
+        <td><%= imd_aws_datum.sr_no %></td>
+        <td><%= imd_aws_datum.state_name %></td>
+        <td><%= imd_aws_datum.station_name %></td>
+        <td><%= imd_aws_datum.parse_date %></td>
+        <td><%= imd_aws_datum.time_utc %></td>
+        <td><%= imd_aws_datum.latitude_n %></td>
+        <td><%= imd_aws_datum.longitude_e %></td>
+        <td><%= imd_aws_datum.slp_hpa %></td>
+        <td><%= imd_aws_datum.mslp_hpa %></td>
+        <td><%= imd_aws_datum.rainfall_mm %></td>
+        <td><%= imd_aws_datum.temperature_deg_c %></td>
+        <td><%= link_to 'Show', imd_aws_datum %></td>
+        <td><%= link_to 'Edit', edit_imd_aws_datum_path(imd_aws_datum) %></td>
+        <td><%= link_to 'Destroy', imd_aws_datum, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Imd aws datum', new_imd_aws_datum_path %>

@@ -11,7 +11,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141118145338) do
+ActiveRecord::Schema.define(version: 20141206033038) do
+
+  create_table "imd_aws_data", force: true do |t|
+    t.integer  "sr_no"
+    t.string   "station_name"
+    t.date     "parse_date"
+    t.time     "time_utc"
+    t.float    "latitude_n"
+    t.float    "longitude_e"
+    t.float    "slp_hpa"
+    t.float    "mslp_hpa"
+    t.float    "rainfall_mm"
+    t.float    "temperature_deg_c"
+    t.integer  "imd_state_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "imd_states", force: true do |t|
+    t.string   "name"
+    t.integer  "code"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "parameters", force: true do |t|
     t.string   "name"

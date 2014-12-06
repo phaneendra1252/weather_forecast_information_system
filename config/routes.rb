@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :imd_states
+  resources :imd_aws_data
   resources :parameters
   devise_for :users, controllers: {registrations: "users/registrations", sessions: "sessions"}
   resources :websites, :roles

@@ -1,0 +1,59 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Sr no:</strong>
+  <%= @imd_aws_datum.sr_no %>
+</p>
+
+<p>
+  <strong>State name:</strong>
+  <%= @imd_aws_datum.state_name %>
+</p>
+
+<p>
+  <strong>Station name:</strong>
+  <%= @imd_aws_datum.station_name %>
+</p>
+
+<p>
+  <strong>Parse date:</strong>
+  <%= @imd_aws_datum.parse_date %>
+</p>
+
+<p>
+  <strong>Time utc:</strong>
+  <%= @imd_aws_datum.time_utc %>
+</p>
+
+<p>
+  <strong>Latitude n:</strong>
+  <%= @imd_aws_datum.latitude_n %>
+</p>
+
+<p>
+  <strong>Longitude e:</strong>
+  <%= @imd_aws_datum.longitude_e %>
+</p>
+
+<p>
+  <strong>Slp hpa:</strong>
+  <%= @imd_aws_datum.slp_hpa %>
+</p>
+
+<p>
+  <strong>Mslp hpa:</strong>
+  <%= @imd_aws_datum.mslp_hpa %>
+</p>
+
+<p>
+  <strong>Rainfall mm:</strong>
+  <%= @imd_aws_datum.rainfall_mm %>
+</p>
+
+<p>
+  <strong>Temperature deg c:</strong>
+  <%= @imd_aws_datum.temperature_deg_c %>
+</p>
+
+<%= link_to 'Edit', edit_imd_aws_datum_path(@imd_aws_datum) %> |
+<%= link_to 'Back', imd_aws_data_path %>
