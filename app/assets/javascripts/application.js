@@ -25,3 +25,15 @@ function add_fields(link, association, content) {
     var regexp = new RegExp("new_" + association, "g");
     $(link).parent().before(content.replace(regexp, new_id));
 }
+
+$(document).ready(function() {
+  $('.form_date').datetimepicker({
+    weekStart: 1,
+    todayBtn:  1,
+    autoclose: 1,
+    todayHighlight: 1,
+    startView: 2,
+    minView: 2,
+    forceParse: 0
+  });
+});

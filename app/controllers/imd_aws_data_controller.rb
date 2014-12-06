@@ -37,6 +37,15 @@ class ImdAwsDataController < ApplicationController
     respond_with(@imd_aws_datum)
   end
 
+  def parse_imd_aws_data
+    from_date = params["aws_data"]["from_date"]
+    to_date = params["aws_data"]["to_date"]
+    from_date = Date.parse(from_date).strftime("%d/%m/%Y")
+    to_date = Date.parse(to_date).strftime("%d/%m/%Y")
+    state_id = params["aws_data"]["state_id"]
+    ImdAwsDatum.parse_imd_aws_data(from_date, to_date, state_id)
+  end
+
   private
     def set_imd_aws_datum
       @imd_aws_datum = ImdAwsDatum.find(params[:id])

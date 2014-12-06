@@ -1,5 +1,22 @@
 <h1>Listing imd_aws_data</h1>
 
+<%= form_tag(parse_imd_aws_data_imd_aws_data_path, method: :get) do %>
+  <div class="field">
+    <label>IMD States</label>
+    <%= select_tag "aws_data[state_id]", options_from_collection_for_select(@imd_states, :id, :name) %>
+  </div>
+  <div class="field">
+    <label>From Date</label>
+    <%= render "shared/datetimepicker", { text_field_data: text_field_tag("aws_data[from_date]") } %>
+    <label>To Date</label>
+    <%= render "shared/datetimepicker", { text_field_data: text_field_tag("aws_data[to_date]") } %>
+  </div>
+  <div class="actions">
+    <%= submit_tag "Get IMD AWS Data" %>
+  </div>
+<% end %>
+
+
 <table>
   <thead>
     <tr>
