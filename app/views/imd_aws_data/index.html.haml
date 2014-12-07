@@ -1,0 +1,35 @@
+%h1 Listing imd_aws_data
+= form_tag(parse_imd_aws_data_imd_aws_data_path, method: :get) do
+  .field
+    %label IMD States
+    = select_tag "aws_data[imd_state_code]", options_from_collection_for_select(@imd_states, :code, :name)
+  .field
+    %label From Date
+    = render "shared/datetimepicker", { text_field_data: text_field_tag("aws_data[from_date]", Date.yesterday.strftime("%B %d, %Y")) }
+    %label To Date
+    = render "shared/datetimepicker", { text_field_data: text_field_tag("aws_data[to_date]", Date.today.strftime("%B %d, %Y")) }
+  .actions
+    = submit_tag "Get IMD AWS Data"
+
+= link_to 'New Imd aws datum', new_imd_aws_datum_path, class: "btn btn-info active"
+.table-responsive
+  %table.table
+    %thead
+      %tr
+        - ImdAwsDatum::TABLE_HEADER.values.each do |column_name|
+          %th= column_name
+        %th
+        %th
+        %th
+    %tbody
+      - imd_aws_columns = ImdAwsDatum::TABLE_HEADER.keys
+      - @imd_aws_data.each do |imd_aws_datum|
+        %tr
+          - imd_aws_columns.each do |imd_aws_column|
+            %td= imd_aws_datum.send(imd_aws_column)
+          %td= link_to 'Show', imd_aws_datum, class: "btn btn-info active"
+          %td= link_to 'Edit', edit_imd_aws_datum_path(imd_aws_datum), class: "btn btn-info active"
+          %td
+            %a{"data-confirm" => "Are you sure?", "data-method" => "delete", href: "/imd_aws_data/#{imd_aws_datum.id}", "class" => "btn btn-danger active"} Destroy
+
+= paginate @imd_aws_data, :theme => 'twitter-bootstrap-3'

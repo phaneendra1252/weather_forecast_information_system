@@ -6,6 +6,7 @@ class ImdAwsDataController < ApplicationController
 
   def index
     @imd_aws_data = ImdAwsDatum.all
+    @imd_aws_data = Kaminari.paginate_array(@imd_aws_data).page(params[:page]).per(50)
     respond_with(@imd_aws_data)
   end
 
