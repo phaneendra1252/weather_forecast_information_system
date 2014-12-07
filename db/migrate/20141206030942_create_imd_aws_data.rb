@@ -11,6 +11,13 @@ class CreateImdAwsData < ActiveRecord::Migration
       t.float :mslp_hpa
       t.float :rainfall_mm
       t.float :temperature_deg_c
+      t.float :dew_point_deg_c
+      t.float :wind_speed_kt
+      t.float :wind_dir_deg
+      t.float :tmax_deg_c
+      t.float :tmin_deg_c
+      t.float :ptend_hpa
+      t.float :sshm
       t.integer :imd_state_id
       t.timestamps
     end

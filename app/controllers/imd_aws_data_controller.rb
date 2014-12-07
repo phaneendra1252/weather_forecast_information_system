@@ -42,8 +42,13 @@ class ImdAwsDataController < ApplicationController
     to_date = params["aws_data"]["to_date"]
     from_date = Date.parse(from_date).strftime("%d/%m/%Y")
     to_date = Date.parse(to_date).strftime("%d/%m/%Y")
-    state_id = params["aws_data"]["state_id"]
-    ImdAwsDatum.parse_imd_aws_data(from_date, to_date, state_id)
+    imd_state_code = params["aws_data"]["imd_state_code"]
+    response = ImdAwsDatum.parse_imd_aws_data(from_date, to_date, imd_state_code)
+    if response[:status]
+      redirect_to "/imd_aws_data", notice: "Imd Aws Data added successfully"
+    else
+      redirect_to "/imd_aws_data", alert: "Imd Aws Data failed to save because of #{response[:error_messages]}"
+    end
   end
 
   private
@@ -56,6 +61,6 @@ class ImdAwsDataController < ApplicationController
     end
 
     def imd_aws_datum_params
-      params.require(:imd_aws_datum).permit(:sr_no, :station_name, :parse_date, :time_utc, :latitude_n, :longitude_e, :slp_hpa, :mslp_hpa, :rainfall_mm, :temperature_deg_c, :imd_state_id)
+      params.require(:imd_aws_datum).permit(:sr_no, :station_name, :parse_date, :time_utc, :latitude_n, :longitude_e, :slp_hpa, :mslp_hpa, :rainfall_mm, :temperature_deg_c, :dew_point_deg_c, :wind_speed_kt, :wind_dir_deg, :tmax_deg_c, :tmin_deg_c, :ptend_hpa, :sshm, :imd_state_id)
     end
 end
