@@ -12,24 +12,17 @@
     = submit_tag "Get IMD AWS Data"
 
 = link_to 'New Imd aws datum', new_imd_aws_datum_path, class: "btn btn-info active"
-.table-responsive
-  %table.table
-    %thead
-      %tr
-        - ImdAwsDatum::TABLE_HEADER.values.each do |column_name|
-          %th= column_name
-        %th
-        %th
-        %th
-    %tbody
-      - imd_aws_columns = ImdAwsDatum::TABLE_HEADER.keys
-      - @imd_aws_data.each do |imd_aws_datum|
-        %tr
-          - imd_aws_columns.each do |imd_aws_column|
-            %td= imd_aws_datum.send(imd_aws_column)
-          %td= link_to 'Show', imd_aws_datum, class: "btn btn-info active"
-          %td= link_to 'Edit', edit_imd_aws_datum_path(imd_aws_datum), class: "btn btn-info active"
-          %td
-            %a{"data-confirm" => "Are you sure?", "data-method" => "delete", href: "/imd_aws_data/#{imd_aws_datum.id}", "class" => "btn btn-danger active"} Destroy
+
+.scroll-div
+  .panel-table
+    - imd_aws_columns = ImdAwsDatum::TABLE_HEADER.keys
+    - ImdAwsDatum::TABLE_HEADER.values.each_with_index do |header, index|
+      .row-div
+        .col-div.headcol
+          = header
+        - @imd_aws_data.each do |imd_aws_datum|
+          .col-div
+            = imd_aws_datum.send(imd_aws_columns[index])
+            &nbsp;
 
 = paginate @imd_aws_data, :theme => 'twitter-bootstrap-3'
