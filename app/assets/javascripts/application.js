@@ -36,4 +36,17 @@ $(document).ready(function() {
     minView: 2,
     forceParse: 0
   });
+
+    $('.wrapper1').on('scroll', function (e) {
+        $('.scroll-div').scrollLeft($('.wrapper1').scrollLeft());
+    });
+    $('.scroll-div').on('scroll', function (e) {
+        $('.wrapper1').scrollLeft($('.scroll-div').scrollLeft());
+    });
+
+});
+
+$(window).on('load', function (e) {
+    $('.div1').width($('.panel-table').width());
+    $('.panel-table').width($('.panel-table').width());
 });
