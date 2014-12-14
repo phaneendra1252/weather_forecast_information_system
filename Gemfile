@@ -29,7 +29,6 @@ gem 'devise'
 gem 'cancan'
 gem 'haml'
 gem 'kaminari'
-gem 'bootstrap-kaminari-views'
 gem 'nokogiri'
 
 # Use ActiveModel has_secure_password

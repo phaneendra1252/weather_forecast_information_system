@@ -46,7 +46,7 @@ $(document).ready(function() {
 
 });
 
-$(window).on('load', function (e) {
+$(document).on('page:change', function () {
     $('.div1').width($('.panel-table').width());
     $('.panel-table').width($('.panel-table').width());
 });
