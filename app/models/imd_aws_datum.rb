@@ -21,8 +21,8 @@ class ImdAwsDatum < ActiveRecord::Base
 	  formated_ptend_hpa: "PTEND[hPa]",
 	  formated_sshm: "SSHM"
 	}
-	float_columns = [:latitude_n, :longitude_e, :slp_hpa, :mslp_hpa, :rainfall_mm, :temperature_deg_c, :dew_point_deg_c, :wind_speed_kt, :wind_dir_deg, :tmax_deg_c, :tmin_deg_c, :ptend_hpa, :sshm]
-	columns = [:sr_no, :station_name, :parse_date, :time_utc] + float_columns
+	FLOAT_COLUMNS = [:latitude_n, :longitude_e, :slp_hpa, :mslp_hpa, :rainfall_mm, :temperature_deg_c, :dew_point_deg_c, :wind_speed_kt, :wind_dir_deg, :tmax_deg_c, :tmin_deg_c, :ptend_hpa, :sshm]
+	COLUMN_VALUES = [:sr_no, :station_name, :parse_date, :time_utc] + FLOAT_COLUMNS
 
 	belongs_to :imd_state
 
@@ -40,7 +40,7 @@ class ImdAwsDatum < ActiveRecord::Base
 		imd_state.name
 	end
 
-	float_columns.each do |float_column|
+	FLOAT_COLUMNS.each do |float_column|
 		method = "formated_"+float_column.to_s
 		define_method(method) do
 			value = self.send(float_column.to_s)
@@ -66,15 +66,19 @@ class ImdAwsDatum < ActiveRecord::Base
 				page.css(content_dom)[1..-1].each do |tr_data|
 					record_hash = { imd_state_id: imd_state_id }
 					tr_data.css(inner_dom).each_with_index do |td_data, index|
-						if columns[index].present?
-							record_hash[columns[index]] = td_data.text
+						if COLUMN_VALUES[index].present?
+							record_hash[COLUMN_VALUES[index]] = td_data.text
 						end
 					end
 					imd_aws_record_data = ImdAwsDatum.strip_flat_value(record_hash)
-					imd_aws_identification_records = imd_aws_record_data.select {|k,v| [:sr_no, :station_name, :parse_date, :time_utc].include?(k)}
-					imd_aws_datum = ImdAwsDatum.where(imd_aws_identification_records)
+					time_value = imd_aws_record_data[:parse_date] + " " + imd_aws_record_data[:time_utc]
+					imd_aws_identification_records = imd_aws_record_data.select {|k,v| [:station_name, :time_utc].include?(k)}
+					imd_aws_identification_records[:time_utc] = DateTime.parse(time_value)
+					imd_aws_record_data[:time_utc] = imd_aws_identification_records[:time_utc]
+					imd_aws_datum = ImdAwsDatum.where(imd_aws_identification_records).first
+					imd_aws_record_data[:parse_date] = Date.parse(imd_aws_record_data[:parse_date])
 					if imd_aws_datum.present?
-						imd_aws_datum.update_attributes!(imd_aws_record_data)
+						imd_aws_datum.update!(imd_aws_record_data)
 					else
 						ImdAwsDatum.create!(imd_aws_record_data)
 					end
@@ -87,9 +91,8 @@ class ImdAwsDatum < ActiveRecord::Base
 	end
 
 	def self.strip_flat_value(record_hash)
-		float_columns = [:latitude_n, :longitude_e, :slp_hpa, :mslp_hpa, :rainfall_mm, :temperature_deg_c, :dew_point_deg_c, :wind_speed_kt, :wind_dir_deg, :tmax_deg_c, :tmin_deg_c, :ptend_hpa, :sshm]
 		record_hash.each do |column, value|
-			if float_columns.include?(column)
+			if FLOAT_COLUMNS.include?(column)
 				record_hash[column] = value.scan(/-*[0-9,\.]+/).flatten.first
 			end
 		end

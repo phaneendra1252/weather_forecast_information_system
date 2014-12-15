@@ -17,7 +17,7 @@ ActiveRecord::Schema.define(version: 20141206033038) do
     t.integer  "sr_no"
     t.string   "station_name"
     t.date     "parse_date"
-    t.time     "time_utc"
+    t.datetime "time_utc"
     t.float    "latitude_n"
     t.float    "longitude_e"
     t.float    "slp_hpa"

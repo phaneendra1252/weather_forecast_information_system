@@ -4,7 +4,7 @@ class CreateImdAwsData < ActiveRecord::Migration
       t.integer :sr_no
       t.string :station_name
       t.date :parse_date
-      t.time :time_utc
+      t.datetime :time_utc
       t.float :latitude_n
       t.float :longitude_e
       t.float :slp_hpa
