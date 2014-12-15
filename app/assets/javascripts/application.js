@@ -36,6 +36,11 @@ $(document).ready(function() {
     minView: 2,
     forceParse: 0
   });
+});
+
+$(document).on('page:change', function () {
+    $('.div1').width($('.panel-table').width());
+    $('.panel-table').width($('.panel-table').width());
 
     $('.wrapper1').on('scroll', function (e) {
         $('.scroll-div').scrollLeft($('.wrapper1').scrollLeft());
@@ -43,10 +48,4 @@ $(document).ready(function() {
     $('.scroll-div').on('scroll', function (e) {
         $('.wrapper1').scrollLeft($('.scroll-div').scrollLeft());
     });
-
-});
-
-$(document).on('page:change', function () {
-    $('.div1').width($('.panel-table').width());
-    $('.panel-table').width($('.panel-table').width());
 });
