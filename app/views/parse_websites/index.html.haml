@@ -1,0 +1,12 @@
+%h1 Listing imd_aws_data
+= form_tag(parse_imd_aws_data_parse_websites_path, method: :get) do
+  .field
+    %label IMD States
+    = select_tag "aws_data[imd_state_code]", options_from_collection_for_select(@imd_states, :code, :name)
+  .field
+    %label From Date
+    = render "shared/datetimepicker", { text_field_data: text_field_tag("aws_data[from_date]", Date.yesterday.strftime("%B %d, %Y")) }
+    %label To Date
+    = render "shared/datetimepicker", { text_field_data: text_field_tag("aws_data[to_date]", Date.today.strftime("%B %d, %Y")) }
+  .actions
+    = submit_tag "Get IMD AWS Data"

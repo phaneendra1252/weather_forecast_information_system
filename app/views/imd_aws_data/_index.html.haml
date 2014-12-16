@@ -1,0 +1,30 @@
+- if imd_aws_data.present?
+  .row
+    .col-md-2
+      %h3= link_to "Get Website Data", parse_websites_path, class: "btn btn-danger active", role: "button"
+    .col-md-8
+      = paginate imd_aws_data
+    .col-md-2
+      %h3= link_to "New Imd Aws Datum", new_imd_aws_datum_path, class: "btn btn-info active", role: "button"
+  .wrapper1
+    .div1
+  .scroll-div
+    .panel-table
+      - imd_aws_columns = ImdAwsDatum::TABLE_HEADER.keys
+      - ImdAwsDatum::TABLE_HEADER.values.each_with_index do |header, index|
+        .row-div
+          .col-div.headcol
+            = header
+          - imd_aws_data.each do |imd_aws_datum|
+            .col-div
+              - if imd_aws_columns[index] == :station_name
+                .glyphicon.glyphicon-pencil
+                  = link_to imd_aws_datum.send(imd_aws_columns[index]), imd_aws_datum_path(imd_aws_datum.id)
+              - else
+                = imd_aws_datum.send(imd_aws_columns[index])
+              &nbsp;
+  .row
+    .col-md-2
+    .col-md-8
+      = paginate imd_aws_data
+    .col-md-2

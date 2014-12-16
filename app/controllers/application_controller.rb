@@ -10,4 +10,10 @@ class ApplicationController < ActionController::Base
   end
   helper :all # include all helpers, all the time
 
+  private
+
+    def set_imd_states
+      @imd_states = ImdState.all
+    end
+
 end

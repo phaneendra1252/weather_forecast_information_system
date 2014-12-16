@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   resources :imd_states
   resources :imd_aws_data do
+  end
+  resources :parse_websites, only: [:index] do
     collection do
       get :parse_imd_aws_data
     end
