@@ -15,17 +15,6 @@
 //= require turbolinks
 //= require_tree ./bootstrap
 
-function remove_fields(link) {
-  $(link).prev("input[type=hidden]").val("1");
-  $(link).closest(".fields").hide();
-}
-
-function add_fields(link, association, content) {
-    var new_id = new Date().getTime();
-    var regexp = new RegExp("new_" + association, "g");
-    $(link).parent().before(content.replace(regexp, new_id));
-}
-
 $(document).ready(function() {
   $('.form_date').datetimepicker({
     weekStart: 1,
@@ -36,6 +25,20 @@ $(document).ready(function() {
     minView: 2,
     forceParse: 0
   });
+
+    $('form').on('click', '.remove_fields', function(event) {
+      $(this).closest('.field').remove();
+      return event.preventDefault();
+    });
+
+    $('form').on('click', '.add_fields', function(event) {
+      var regexp, time;
+      time = new Date().getTime();
+      regexp = new RegExp($(this).data('id'), 'g');
+      $(this).before($(this).data('fields').replace(regexp, time));
+      return event.preventDefault();
+    });
+
 });
 
 $(document).on('page:change', function () {

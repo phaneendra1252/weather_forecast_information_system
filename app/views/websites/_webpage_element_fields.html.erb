@@ -1,7 +1,0 @@
-<p class="fields">
-  <%= f.label :dom_path, "dom_path" %>
-  <%= f.text_field :dom_path %>
-  <%= f.label :parameter_id %>
-  <%= f.collection_select(:parameter_id, Parameter.all, :id, :name) %>
-  <%= link_to_remove_fields "remove", f %>
-</p>

@@ -1,11 +1,15 @@
 class ImdAwsDataController < ApplicationController
-  before_action :set_imd_aws_datum, only: [:show, :edit, :update, :destroy]
+  # before_action :set_imd_aws_datum, only: [:show, :edit, :update, :destroy]
   before_action :set_imd_states
 
   respond_to :html
 
   def index
-    @imd_aws_data = ImdAwsDatum.all
+    @search = ImdAwsDatum.search(params[:q])
+    @imd_aws_data = @search.result
+    @search.build_condition if @search.conditions.empty?
+    @search.build_sort if @search.sorts.empty?
+    # @imd_aws_data = @search.result.page(params[:page]).per(100)
     @imd_aws_data = Kaminari.paginate_array(@imd_aws_data).page(params[:page]).per(100)
     respond_with(@imd_aws_data)
   end

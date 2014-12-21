@@ -1,18 +1,17 @@
 Rails.application.routes.draw do
   resources :imd_states
   resources :imd_aws_data do
+    collection { post :search, to: 'imd_aws_data#index' }
   end
   resources :parse_websites, only: [:index] do
     collection do
       get :parse_imd_aws_data
     end
   end
-  resources :parameters
   devise_for :users, controllers: {registrations: "users/registrations", sessions: "sessions"}
-  resources :websites, :roles
+  resources :roles
   resources :users, only: [:index, :edit, :new, :create, :update, :destroy]
-  root 'websites#index'
-  resources :websites
+  root 'imd_aws_data#index'
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
