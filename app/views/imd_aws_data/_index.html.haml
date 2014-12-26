@@ -2,10 +2,12 @@
   .row
     .col-md-2
       %h3= link_to "Get Website Data", parse_websites_path, class: "btn btn-danger active", role: "button"
-    .col-md-8
+    .col-md-6
       = paginate imd_aws_data
     .col-md-2
       %h3= link_to "New Imd Aws Datum", new_imd_aws_datum_path, class: "btn btn-info active", role: "button"
+    .col-md-2
+      %h3= link_to "Download Excel", imd_aws_data_path(format: "xls"), class: "btn btn-success active", role: "button"
   .wrapper1
     .div1
   .scroll-div

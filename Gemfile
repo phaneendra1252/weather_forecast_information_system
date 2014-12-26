@@ -30,6 +30,7 @@ gem 'cancan'
 gem 'haml'
 gem 'kaminari'
 gem 'nokogiri'
+gem 'roo'
 
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
