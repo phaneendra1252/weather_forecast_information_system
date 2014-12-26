@@ -1,11 +1,1 @@
-= search_form_for @search, url: search_imd_aws_data_path, method: :post do |f|
-  = f.condition_fields do |c|
-    = render "condition_fields", f: c
-  %p= link_to_add_fields "Add Conditions", f, :condition
-  .field
-    Sort:
-    =f.sort_fields do |s|
-      = s.sort_select
-  .actions= f.submit "Search"
-
 = render "index", { imd_aws_data: @imd_aws_data }

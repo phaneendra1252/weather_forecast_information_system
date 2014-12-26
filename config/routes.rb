@@ -1,7 +1,6 @@
 Rails.application.routes.draw do
   resources :imd_states
   resources :imd_aws_data do
-    collection { post :search, to: 'imd_aws_data#index' }
   end
   resources :parse_websites, only: [:index] do
     collection do
