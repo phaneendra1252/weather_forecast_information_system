@@ -24,6 +24,9 @@
 	background-color: #337AB7;
 	color: #ffffff;
 }
+.sort_link {
+	color: #ffffff;
+}
 .panel-table {
 	display:table;
 	width:auto;

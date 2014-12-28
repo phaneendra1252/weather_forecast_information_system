@@ -31,7 +31,7 @@ gem 'haml'
 gem 'kaminari'
 gem 'nokogiri'
 gem 'roo'
-
+gem 'ransack'
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 

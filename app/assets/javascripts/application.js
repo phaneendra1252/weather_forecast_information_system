@@ -16,6 +16,7 @@
 //= require_tree ./bootstrap
 
 $(document).ready(function() {
+
   $('.form_date').datetimepicker({
     weekStart: 1,
     todayBtn:  1,
@@ -25,6 +26,17 @@ $(document).ready(function() {
     minView: 2,
     forceParse: 0
   });
+
+  $(document).on("click", "button.add_fields", function() {
+    add_fields(this, $(this).data('fieldType'), $(this).data('content'));
+    return false;
+  });
+
+  $(document).on("click", "button.remove_fields", function() {
+    remove_fields(this);
+    return false;
+  });
+
 });
 
 $(document).on('page:change', function () {
@@ -38,3 +50,14 @@ $(document).on('page:change', function () {
         $('.wrapper1').scrollLeft($('.scroll-div').scrollLeft());
     });
 });
+
+function remove_fields(button) {
+  return $(button).closest('.fields').remove();
+}
+
+function add_fields(button, type, content) {
+  var new_id, regexp;
+  new_id = new Date().getTime();
+  regexp = new RegExp('new_' + type, 'g');
+  return $(button).before(content.replace(regexp, new_id));
+}

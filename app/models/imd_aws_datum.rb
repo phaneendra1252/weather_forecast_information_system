@@ -21,6 +21,12 @@ class ImdAwsDatum < ActiveRecord::Base
 	  formated_ptend_hpa: "PTEND[hPa]",
 	  formated_sshm: "SSHM"
 	}
+	ACTUAL_COLUMNS = [
+		:sr_no, :state_id, :station_name, :parse_date, :time_utc,
+		:latitude_n, :longitude_e, :slp_hpa, :mslp_hpa, :rainfall_mm,
+		:temperature_deg_c, :dew_point_deg_c, :wind_speed_kt, :wind_dir_deg,
+		:tmax_deg_c, :tmin_deg_c, :ptend_hpa, :sshm
+	]
 	FLOAT_COLUMNS = [:latitude_n, :longitude_e, :slp_hpa, :mslp_hpa, :rainfall_mm, :temperature_deg_c, :dew_point_deg_c, :wind_speed_kt, :wind_dir_deg, :tmax_deg_c, :tmin_deg_c, :ptend_hpa, :sshm]
 	COLUMN_VALUES = [:sr_no, :station_name, :parse_date, :time_utc] + FLOAT_COLUMNS
 

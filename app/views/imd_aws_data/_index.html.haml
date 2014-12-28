@@ -1,3 +1,5 @@
+= render :partial => "ransack/search_form", :locals => { object: @search, path: advanced_search_imd_aws_data_path, associations: [] }
+
 - if imd_aws_data.present?
   .row
     .col-md-2
@@ -16,7 +18,7 @@
       - ImdAwsDatum::TABLE_HEADER.values.each_with_index do |header, index|
         .row-div
           .col-div.headcol
-            = header
+            = sort_link(@search, ImdAwsDatum::ACTUAL_COLUMNS[index], header, {}, method: params[:action])
           - imd_aws_data.each do |imd_aws_datum|
             .col-div
               - if imd_aws_columns[index] == :station_name

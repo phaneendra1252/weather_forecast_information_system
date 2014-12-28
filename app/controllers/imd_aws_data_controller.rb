@@ -1,14 +1,28 @@
 class ImdAwsDataController < ApplicationController
   # before_action :set_imd_aws_datum, only: [:show, :edit, :update, :destroy]
   before_action :set_imd_states
+  before_action :index_data, only: [:index, :advanced_search]
 
   respond_to :html
 
   def index
-    imd_aws_data = ImdAwsDatum.all
-    @imd_aws_data = Kaminari.paginate_array(imd_aws_data).page(params[:page]).per(100)
+    index_data
+    imd_aws_data = @imd_aws_data
+    @imd_aws_data= @imd_aws_data.page(params[:page]).per(100)
     respond_to do |format|
       format.html
+      format.xls {send_data imd_aws_data.to_xls(xls_data: ImdAwsDatum::TABLE_HEADER, :model_name => "ImdAwsDatum") }
+    end
+  end
+
+  def advanced_search
+    index_data
+    imd_aws_data = @imd_aws_data
+    @imd_aws_data= @imd_aws_data.page(params[:page]).per(100)
+    respond_to do |format|
+      format.html {
+        render :template => "imd_aws_data/index"
+      }
       format.xls {send_data imd_aws_data.to_xls(xls_data: ImdAwsDatum::TABLE_HEADER, :model_name => "ImdAwsDatum") }
     end
   end
@@ -44,6 +58,12 @@ class ImdAwsDataController < ApplicationController
   private
     def set_imd_aws_datum
       @imd_aws_datum = ImdAwsDatum.find(params[:id])
+    end
+
+    def index_data
+      @search = ImdAwsDatum.search(params[:q])
+      @search.build_grouping unless @search.groupings.any?
+      @imd_aws_data  = params[:distinct].to_i.zero? ? @search.result : @search.result(distinct: true)
     end
 
     def imd_aws_datum_params

@@ -1,0 +1,16 @@
+= search_form_for(object, url: path, html: { method: :post }) do |f|
+  = f.label :created_at_gteq
+  = f.text_field :created_at_gteq
+  = f.label :created_at_lteq
+  = f.text_field :created_at_lteq
+  - f.grouping_fields f.object.new_grouping, object_name: 'new_object_name', child_index: "new_grouping" do |f|
+    = render('ransack/grouping_fields', f: f, associations: associations)
+  %fieldset
+    %legend Sorting
+    = f.sort_fields do |s|
+      = render 'ransack/sort_fields', f: s
+    = render 'ransack/render_fields', f: f, type: :sort, name: 'Add Sort', associations: associations
+  %div
+    = f.grouping_fields do |g|
+      = render 'ransack/grouping_fields', f: g, associations: associations
+  = f.submit

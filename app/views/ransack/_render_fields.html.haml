@@ -1,0 +1,4 @@
+- new_object = f.object.send "build_#{type}"
+- fields = f.send("#{type}_fields", new_object, child_index: "new_#{type}") do |builder|
+  = render("ransack/"+type.to_s + "_fields", f: builder, associations: associations)
+%button.add_fields{ 'data-field-type' => type, 'data-content' => "#{fields}" }= name

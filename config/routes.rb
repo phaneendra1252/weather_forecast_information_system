@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   resources :imd_states
   resources :imd_aws_data do
+    match 'advanced_search' => 'imd_aws_data#advanced_search', on: :collection, via: [:get, :post], as: :advanced_search
   end
   resources :parse_websites, only: [:index] do
     collection do
