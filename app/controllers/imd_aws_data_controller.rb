@@ -9,7 +9,7 @@ class ImdAwsDataController < ApplicationController
     @imd_aws_data = Kaminari.paginate_array(imd_aws_data).page(params[:page]).per(100)
     respond_to do |format|
       format.html
-      format.xls {send_data imd_aws_data.to_xls(:except => [:id, :created_at, :updated_at], :model_name => "ImdAwsDatum") }
+      format.xls {send_data imd_aws_data.to_xls(xls_data: ImdAwsDatum::TABLE_HEADER, :model_name => "ImdAwsDatum") }
     end
   end
 

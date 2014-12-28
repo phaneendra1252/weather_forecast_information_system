@@ -3,47 +3,31 @@ require 'spreadsheet'
 class Array
 
   def to_xls(options = {}, &block)
-    #return '' if self.empty?
-
-    model_name = nil
-
-    if self.empty?
+    if options[:model_name].present?
       model_name = options[:model_name].constantize
     else
-      model_name = self.first.class
+      return ''
     end
-
     xls_report = StringIO.new
     book = Spreadsheet::Workbook.new
     sheet = book.create_worksheet
+    header = []
     columns = []
-
-    if options[:methods].present?
-      columns = Array(options[:methods])
+    if options[:xls_data]
+      header += options[:xls_data].values
+      columns += options[:xls_data].keys
     end
-
-    if options[:only].present?
-      columns += Array(options[:only]).map(&:to_sym)
-    elsif options[:except].present?
-      columns += model_name.column_names.map(&:to_sym) - Array(options[:except]).map(&:to_sym)
+    if header.present? && columns.present?
+      sheet.row(0).concat(header.map(&:to_s))
     else
-      columns += model_name.column_names.map(&:to_sym)
+      return ''
     end
-    
-    return '' if columns.empty?
-
-    sheet.row(0).concat(columns.map(&:to_s).collect{|s| s.gsub("_", " ").titleize})
-
     self.each_with_index do |obj, index|
-      if block
-        sheet.row(index + 1).replace(columns.map { |column| block.call(column, obj.send(column)) })
-      else
-        sheet.row(index + 1).replace(columns.map { |column| obj.send(column) })
+      if options[:xls_data].present?
+        sheet.row(index + 1).replace(options[:xls_data].map { |k, v| obj.send(k) })
       end
     end
-
     book.write(xls_report)
-
     xls_report.string
   end
 
