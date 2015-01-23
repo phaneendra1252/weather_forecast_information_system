@@ -26,3 +26,32 @@ page.css(content_dom)[1..-1].each do |tr_data|
 	end
 	ImdAwsData.create!(record_hash)
 end
+
+1) http://www.imdaws.com/
+2) AWS
+3) every state
+4) date(previous date from and to)
+5) district, location, time default
+
+
+1)http://apsdps.gov.in/
+2) click http://apsdps.gov.in/index.html
+3) Weather Observations => Soil Moisture sensor network => Table
+4) http://117.247.178.79/tsdps/soil_moisture.jsp
+
+1) Global Radiation Sensor => Table
+2) for every district.
+
+same for telangana
+
+1) http://tawn.tnau.ac.in/General/HomePublicUI.aspx
+
+Weather Data
+
+
+http://imd.gov.in/
+
+Departmental Website for all sites.=> Weather observations daily observations.
+
+
+Weather Observations => Daily Observations
