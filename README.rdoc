@@ -1,3 +1,60 @@
+1) http://www.imdaws.com/viewawsdata.aspx
+state ap
+from date prev date
+to date prev date
+View Data (click)
+Repeat this for all the states.
+Saving process:-
+One month date = one file
+Sheet = 1 day data.
+1 state = 1 file.
+Given when requested.
+Available data for past 7 days
+
+2) http://apsdps.gov.in/
+here we have ap and tp
+ap:- http://apsdps.gov.in/index.html
+tp:- http://117.247.178.79/tsdps/
+weather observations => soil moisture sensor network, global radiation sensor
+soil moisture sensor network => table
+now we should maintain separate file for soil moisture sensor network and global radiation sensor network
+Global radiation sensor => table
+Separate files for districts
+Also add latitude and longitude for this file only.
+Available data for past 1day
+Given per month
+
+3) Tamil Nadu weather data:-
+http://tawn.tnau.ac.in/General/HomePublicUI.aspx
+weather data => district=> block take last day data
+take district and block wise report check your self for format.
+
+4) http://www.imd.gov.in/
+
+Departmental websites
+Hyderabad;- ap,telangana
+Ap=> weather observations => daily observations
+Chennai => observations => main cities
+Observations recorded at  1730 hrs IST on 24.01.2015
+WEATHER OVER TAMILNADU AND PUDUCHERRY
+
+Ahmadabad:-
+Daily weather report:-
+Observation Recorded At 08:30 HRS IST on  Date  24/01/2015, 04th  Magha 1936 (SAKA)
+
+Nagpur:-
+Weather report => regional dwr
+OBSERVATION RECORDED AT 0830 HRS. IST OF DATED 24-Jan
+
+Mumbai => regional weather report => daily regional weather report.
+Meteorological Observations recorded at 08:30 Hrs. IST of January 23,2015
+
+
+
+
+************************************************************************************************************************************************************************************************************************************************************************************************************************************
+
+
 http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=05/12/2014&ToDate=05/12/2014&State=3&District=0&Loc=0&Time=
 
 from_date = "05/12/2014"
