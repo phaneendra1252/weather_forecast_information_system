@@ -2,6 +2,8 @@
   .form-group.row
     = f.label :file_name
     = f.text_field :file_name, :autofocus => true
-    = f.fields_for :webpage_element do |builder|
-      = render 'webpage_element_fields', :f => builder
-    = link_to_add_fields "Add webpage element", f, :webpage_element, "btn btn-default", "Add new webpage element"
+    = link_to_remove_fields "remove", f
+
+  = f.fields_for :webpage_element do |builder|
+    = render 'webpage_element_fields', :f => builder
+  = link_to_add_fields "Add webpage element", f, :webpage_element, "btn btn-default", "Add a new webpage element"
