@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141206033038) do
+ActiveRecord::Schema.define(version: 20150125143146) do
 
   create_table "imd_aws_data", force: true do |t|
     t.integer  "sr_no"
@@ -84,9 +84,16 @@ ActiveRecord::Schema.define(version: 20141206033038) do
   end
 
   create_table "webpage_elements", force: true do |t|
+    t.string   "heading_path"
+    t.string   "content_path"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "webpage_elements_website_urls", force: true do |t|
     t.integer  "website_url_id"
-    t.integer  "parameter_id"
-    t.string   "dom_path"
+    t.integer  "webpage_element_id"
+    t.string   "file_name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

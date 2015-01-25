@@ -6,3 +6,6 @@
   = f.fields_for :parameters do |builder|
     = render 'parameter_fields', :f => builder
   = link_to_add_fields "Add a parameter", f, :parameters, "btn btn-default", "Add a new parameter"
+  = f.fields_for :webpage_elements_website_urls do |builder|
+    = render 'webpage_elements_website_url_fields', :f => builder
+  = link_to_add_fields "Add file name details", f, :webpage_elements_website_urls, "btn btn-default", "Add a new file name details"
