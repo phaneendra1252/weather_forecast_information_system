@@ -43,7 +43,7 @@ Daily weather report:-
 Observation Recorded At 08:30 HRS IST on  Date  24/01/2015, 04th  Magha 1936 (SAKA)
 
 Nagpur:-
-Weather report => regional dwr
+daily Weather report => regional dwr
 OBSERVATION RECORDED AT 0830 HRS. IST OF DATED 24-Jan
 
 Mumbai => regional weather report => daily regional weather report.
