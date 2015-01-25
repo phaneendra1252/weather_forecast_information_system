@@ -44,7 +44,9 @@ ActiveRecord::Schema.define(version: 20141206033038) do
   end
 
   create_table "parameters", force: true do |t|
-    t.string   "name"
+    t.integer  "website_url_id"
+    t.string   "symbol"
+    t.string   "value"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

@@ -1,0 +1,20 @@
+.panel.panel-default
+  .panel-heading
+    .panel-title
+      .row
+        .col-md-4
+          Add website details
+        .col-md-8
+          .pull-right
+            = link_to "Back", "/websites", class: "btn btn-info active"
+  .panel-body
+    = form_for(@website, :html => { :role => "form" }) do |f|
+      = render 'shared/error_messages', { object: @website }
+      .form-group
+        = f.label :name, "Website Name"
+        = f.text_field :name, :autofocus => true
+      = f.fields_for :website_urls do |builder|
+        = render "website_url_fields", :f => builder
+      = link_to_add_fields "Add a Website Url", f, :website_urls, "btn btn-primary", "Add a new Website Url"
+      .actions.text-center
+        = f.submit "Submit", :class => "btn btn-success"

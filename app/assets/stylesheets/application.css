@@ -63,3 +63,7 @@
 /* scroll css end */
 
 .wrapper1, .div1 { height: 20px; }
+
+.add-border {
+  border: 2px solid lavender;
+}

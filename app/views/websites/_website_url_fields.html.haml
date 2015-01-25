@@ -1,0 +1,8 @@
+.fields.container.add-border
+  .form-group.row
+    = f.label :url, "Website Url"
+    = f.text_field :url, :autofocus => true
+    = link_to_remove_fields "remove", f
+  = f.fields_for :parameters do |builder|
+    = render 'parameter_fields', :f => builder
+  = link_to_add_fields "Add a parameter", f, :parameters, "btn btn-default", "Add a new parameter"

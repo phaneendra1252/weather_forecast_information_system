@@ -61,3 +61,14 @@ function add_fields(button, type, content) {
   regexp = new RegExp('new_' + type, 'g');
   return $(button).before(content.replace(regexp, new_id));
 }
+
+function remove_nested_fields(link) {
+  $(link).prev("input[type=hidden]").val("1");
+  $(link).closest(".fields").hide();
+}
+
+function add_nested_fields(link, association, content) {
+  var new_id = new Date().getTime();
+  var regexp = new RegExp("new_" + association, "g");
+  $(link).before(content.replace(regexp, new_id));
+}
