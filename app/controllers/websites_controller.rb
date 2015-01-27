@@ -68,7 +68,8 @@ class WebsitesController < ApplicationController
               :id,
               :_destroy,
               :heading_path,
-              :content_path
+              :content_path,
+              :header
             ]
           ]
         ]

@@ -1,7 +1,9 @@
 .fields.container.add-border
   .form-group.row
     = f.label :heading_path
-    = f.text_field :heading_path, :autofocus => true
+    = f.text_field :heading_path, autofocus: true
     = f.label :content_path
-    = f.text_field :content_path, :autofocus => true
+    = f.text_field :content_path, autofocus: true
+    = f.label :header
+    = f.text_field :header, autofocus: true
     = link_to_remove_fields "remove", f

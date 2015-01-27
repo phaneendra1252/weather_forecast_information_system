@@ -56,6 +56,44 @@ class ImdAwsDatum < ActiveRecord::Base
 	  end
 	end
 
+	def self.test
+		websites = Website.all
+		websites.each do |website|
+			website.website_urls.each do |website_url|
+				ImdAwsDatum.xls_generation(website_url)
+			end
+		end
+	end
+
+	def self.url_generation(website_url)
+		url = website_url.url
+		website_url.parameters.each do |parameter|
+			url = url.gsub(parameter.symbol, parameter.value)
+		end
+		url = File.open(url)
+	end
+
+	def self.xls_generation(website_url)
+		url = ImdAwsDatum.url_generation(website_url)
+		page = Nokogiri::HTML(url)
+		website_url.webpage_elements_website_urls.each do |webpage_elements_website_url|
+			webpage_element = webpage_elements_website_url.webpage_element
+			Spreadsheet.client_encoding = 'UTF-8'
+			book = Spreadsheet::Workbook.new
+			sheet = book.create_worksheet :name => 'test'
+			sheet.row(0)[0] = page.css(webpage_element.heading_path).text
+			page.css(webpage_element.content_path).each_with_index do |tr_data, tr_index|
+				sheet.row(tr_index+1).replace(tr_data.text.strip.split("\n").map(&:strip))
+			end
+			header = webpage_element.header.split("&&")
+			header_length = header.length
+			header.each_with_index do |header_value, header_index|
+				sheet.row(header_index+1).replace(header_value.split(",").map(&:strip))
+			end
+			book.write webpage_elements_website_url.file_name + ".xls"
+		end
+	end
+
 	def self.parse_imd_aws_data(from_date, to_date, imd_state_code)
 		district_id = 0
 		location_id = 0

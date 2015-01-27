@@ -4,7 +4,6 @@ class CreateWebpageElementsWebsiteUrls < ActiveRecord::Migration
       t.integer :website_url_id
       t.integer :webpage_element_id
       t.string :file_name
-
       t.timestamps
     end
   end

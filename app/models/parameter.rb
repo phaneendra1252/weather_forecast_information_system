@@ -2,6 +2,7 @@ class Parameter < ActiveRecord::Base
   belongs_to :website_url
   validates :symbol, presence: true
   validates :symbol, :uniqueness => { :scope => :website_url_id }
+  #todo3 not working
   validates :website_url, presence: true
   validate :check_symbol_in_url
 

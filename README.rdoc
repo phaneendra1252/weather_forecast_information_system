@@ -1,3 +1,9 @@
+rake db:drop
+rake db:create
+rake db:migrate
+rake db:seed
+rails s
+
 1) http://www.imdaws.com/viewawsdata.aspx
 state ap
 from date prev date

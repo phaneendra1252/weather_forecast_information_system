@@ -86,6 +86,7 @@ ActiveRecord::Schema.define(version: 20150125143146) do
   create_table "webpage_elements", force: true do |t|
     t.string   "heading_path"
     t.string   "content_path"
+    t.string   "header"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
