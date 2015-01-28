@@ -82,13 +82,25 @@ class ImdAwsDatum < ActiveRecord::Base
 			book = Spreadsheet::Workbook.new
 			sheet = book.create_worksheet :name => 'test'
 			sheet.row(0)[0] = page.css(webpage_element.heading_path).text
-			page.css(webpage_element.content_path).each_with_index do |tr_data, tr_index|
-				sheet.row(tr_index+1).replace(tr_data.text.strip.split("\n").map(&:strip))
+			page.css(webpage_element.content_path_value).each_with_index do |tr_data, tr_index|
+				tr_data.css(webpage_element.data_path_value).each_with_index do |td_data, td_index|
+					sheet.row(tr_index+1)[td_index] = td_data.text
+				end
 			end
-			header = webpage_element.header.split("&&")
-			header_length = header.length
-			header.each_with_index do |header_value, header_index|
-				sheet.row(header_index+1).replace(header_value.split(",").map(&:strip))
+			header = webpage_element.header
+			if header.present?
+				header = header.split("&&")
+				header.each_with_index do |header_value, header_index|
+					sheet.row(header_index+1).replace(header_value.split(",").map(&:strip))
+				end
+				merge_cells = webpage_element.merge_cells
+				if merge_cells.present?
+					merge_cells = merge_cells.split("&&")
+					merge_cells.each do |merge_cell|
+						r1, td1, r2, td2 = merge_cell.split(",").map(&:strip).map(&:to_i)
+						sheet.merge_cells(r1, td1, r2, td2)
+					end
+				end
 			end
 			book.write webpage_elements_website_url.file_name + ".xls"
 		end

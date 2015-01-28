@@ -69,7 +69,8 @@ class WebsitesController < ApplicationController
               :_destroy,
               :heading_path,
               :content_path,
-              :header
+              :header,
+              :merge_cells
             ]
           ]
         ]
