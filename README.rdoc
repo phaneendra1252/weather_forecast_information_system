@@ -4,6 +4,17 @@ rake db:migrate
 rake db:seed
 rails s
 
+
+Website Name: andhra_pradesh_soil_moisture_sensor_network
+Website Url: /home/surya/project_files/andhra_pradesh_soil_moisture_sensor_netwo$&.html
+Symbol: $ Value: r
+Symbol: & Value: k
+File name: soil_moisture_sensor_network
+Heading path: #dp_content_map1 table tr td:first span
+Content path: #dp_content_temp table tr, td
+Header: Client_id, District, Mandal, Location, Soil_Moisture(Depth),,, Soil_Temperature && , , , , 30cm(%), 60cm(%), 1m(%), Max, Min
+Merge cells: 1, 4, 1, 6&&1, 7, 1, 8
+
 1) http://www.imdaws.com/viewawsdata.aspx
 state ap
 from date prev date
