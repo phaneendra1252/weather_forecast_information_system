@@ -67,8 +67,15 @@ class ImdAwsDatum < ActiveRecord::Base
 
 	def self.url_generation(website_url)
 		url = website_url.url
-		website_url.parameters.each do |parameter|
-			url = url.gsub(parameter.symbol, parameter.value)
+		# common_parameter = website_url.common_parameter
+		# if common_parameter.present?
+		# 	common_parameter_values = common_parameter.value.split(",")
+		# 	common_parameter.symbol.split(",").each_with_index do |symbol, index|
+		# 		url = url.gsub(symbol, common_parameter_values[index])
+		# 	end
+		# end
+		website_url.common_parameters.each do |common_parameter|
+			url = url.gsub(common_parameter.symbol, common_parameter.value)
 		end
 		url = File.open(url)
 	end
@@ -76,14 +83,13 @@ class ImdAwsDatum < ActiveRecord::Base
 	def self.xls_generation(website_url)
 		url = ImdAwsDatum.url_generation(website_url)
 		page = Nokogiri::HTML(url)
-		website_url.webpage_elements_website_urls.each do |webpage_elements_website_url|
-			webpage_element = webpage_elements_website_url.webpage_element
+		website_url.webpage_elements.each do |webpage_element|
 			Spreadsheet.client_encoding = 'UTF-8'
 			book = Spreadsheet::Workbook.new
 			sheet = book.create_worksheet :name => 'test'
 			sheet.row(0)[0] = page.css(webpage_element.heading_path).text
-			page.css(webpage_element.content_path_value).each_with_index do |tr_data, tr_index|
-				tr_data.css(webpage_element.data_path_value).each_with_index do |td_data, td_index|
+			page.css(webpage_element.content_path).each_with_index do |tr_data, tr_index|
+				tr_data.css(webpage_element.data_path).each_with_index do |td_data, td_index|
 					sheet.row(tr_index+1)[td_index] = td_data.text
 				end
 			end
@@ -102,7 +108,7 @@ class ImdAwsDatum < ActiveRecord::Base
 					end
 				end
 			end
-			book.write webpage_elements_website_url.file_name + ".xls"
+			book.write webpage_element.file_name + ".xls"
 		end
 	end
 

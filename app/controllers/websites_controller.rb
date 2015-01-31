@@ -15,9 +15,9 @@ class WebsitesController < ApplicationController
   def new
     @website = Website.new
     website_url = @website.website_urls.build
-    website_url.parameters.build
-    webpage_elements_website_url = website_url.webpage_elements_website_urls.build
-    webpage_elements_website_url.build_webpage_element
+    website_url.common_parameters.build
+    website_url.respective_parameter_groups.build.respective_parameters.build
+    website_url.webpage_elements.build
     respond_with(@website)
   end
 
@@ -53,24 +53,33 @@ class WebsitesController < ApplicationController
           :id,
           :_destroy,
           :url,
-          parameters_attributes: [
+          common_parameters_attributes: [
             :id,
             :_destroy,
             :website_url_id,
             :symbol,
             :value
           ],
-          webpage_elements_website_urls_attributes: [
+          webpage_elements_attributes: [
             :id,
             :_destroy,
-            :file_name,
-            webpage_element_attributes: [
+            :heading_path,
+            :content_path,
+            :data_path,
+            :header,
+            :merge_cells,
+            :file_name
+          ],
+          respective_parameter_groups_attributes: [
+            :id,
+            :_destroy,
+            :website_url_id,
+            respective_parameters_attributes: [
               :id,
               :_destroy,
-              :heading_path,
-              :content_path,
-              :header,
-              :merge_cells
+              :website_url_id,
+              :symbol,
+              :value
             ]
           ]
         ]

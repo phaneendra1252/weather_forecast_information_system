@@ -1,0 +1,7 @@
+.fields.container
+  .form-group.row
+    = f.label :symbol
+    = f.text_field :symbol, :autofocus => true
+    = f.label :value
+    = f.text_field :value, :autofocus => true
+    = link_to_remove_fields "remove", f

@@ -3,8 +3,10 @@ class CreateWebpageElements < ActiveRecord::Migration
     create_table :webpage_elements do |t|
       t.string :heading_path
       t.string :content_path
+      t.string :data_path
       t.string :header
       t.string :merge_cells
+      t.string :file_name
       t.timestamps
     end
   end

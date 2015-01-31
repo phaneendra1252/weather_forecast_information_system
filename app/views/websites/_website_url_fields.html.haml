@@ -3,9 +3,13 @@
     = f.label :url, "Website Url"
     = f.text_field :url, :autofocus => true
     = link_to_remove_fields "remove", f
-  = f.fields_for :parameters do |builder|
-    = render 'parameter_fields', :f => builder
-  = link_to_add_fields "Add a parameter", f, :parameters, "btn btn-default", "Add a new parameter"
-  = f.fields_for :webpage_elements_website_urls do |builder|
-    = render 'webpage_elements_website_url_fields', :f => builder
-  = link_to_add_fields "Add file name details", f, :webpage_elements_website_urls, "btn btn-default", "Add a new file name details"
+  = f.fields_for :common_parameters do |builder|
+    = render 'common_parameter_fields', :f => builder
+  = link_to_add_fields "Add a common parameter", f, :common_parameters, "btn btn-default", "Add a new common parameter"
+  = f.fields_for :respective_parameter_groups do |builder|
+    = render 'respective_parameter_group_fields', :f => builder
+  = link_to_add_fields "Add a respective parameter group", f, :respective_parameter_groups, "btn btn-default", "Add a new respective parameter group"
+
+  = f.fields_for :webpage_elements do |builder|
+    = render 'webpage_element_fields', :f => builder
+  = link_to_add_fields "Add webpage elements", f, :webpage_elements, "btn btn-default", "Add a new webpage element"

@@ -1,0 +1,6 @@
+.fields.container.add-border
+  .form-group.row
+    = f.fields_for :respective_parameters do |builder|
+      = render 'respective_parameter_fields', :f => builder
+    = link_to_add_fields "Add a respective parameter", f, :respective_parameters, "btn btn-default", "Add a new respective parameter"
+    = link_to_remove_fields "remove", f

@@ -11,7 +11,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150125143146) do
+ActiveRecord::Schema.define(version: 20150131171530) do
+
+  create_table "common_parameters", force: true do |t|
+    t.integer  "website_url_id"
+    t.string   "symbol"
+    t.string   "value"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "imd_aws_data", force: true do |t|
     t.integer  "sr_no"
@@ -43,8 +51,12 @@ ActiveRecord::Schema.define(version: 20150125143146) do
     t.datetime "updated_at"
   end
 
-  create_table "parameters", force: true do |t|
-    t.integer  "website_url_id"
+  create_table "respective_parameter_groups", force: true do |t|
+    t.integer "website_url_id"
+  end
+
+  create_table "respective_parameters", force: true do |t|
+    t.integer  "respective_parameter_group_id"
     t.string   "symbol"
     t.string   "value"
     t.datetime "created_at"
@@ -86,8 +98,10 @@ ActiveRecord::Schema.define(version: 20150125143146) do
   create_table "webpage_elements", force: true do |t|
     t.string   "heading_path"
     t.string   "content_path"
+    t.string   "data_path"
     t.string   "header"
     t.string   "merge_cells"
+    t.string   "file_name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -95,7 +109,6 @@ ActiveRecord::Schema.define(version: 20150125143146) do
   create_table "webpage_elements_website_urls", force: true do |t|
     t.integer  "website_url_id"
     t.integer  "webpage_element_id"
-    t.string   "file_name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

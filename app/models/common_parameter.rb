@@ -1,4 +1,4 @@
-class Parameter < ActiveRecord::Base
+class CommonParameter < ActiveRecord::Base
   belongs_to :website_url
   validates :symbol, presence: true
   validates :symbol, :uniqueness => { :scope => :website_url_id }
@@ -11,4 +11,5 @@ class Parameter < ActiveRecord::Base
       errors.add(:symbol, " doesn't exist in website url")
     end
   end
+
 end

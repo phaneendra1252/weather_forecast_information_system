@@ -3,7 +3,6 @@ class CreateWebpageElementsWebsiteUrls < ActiveRecord::Migration
     create_table :webpage_elements_website_urls do |t|
       t.integer :website_url_id
       t.integer :webpage_element_id
-      t.string :file_name
       t.timestamps
     end
   end
