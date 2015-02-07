@@ -1,4 +1,5 @@
 require 'open-uri'
+require 'spreadsheet'
 class ImdAwsDatum < ActiveRecord::Base
 
 	TABLE_HEADER = {
@@ -60,33 +61,50 @@ class ImdAwsDatum < ActiveRecord::Base
 		websites = Website.all
 		websites.each do |website|
 			website.website_urls.each do |website_url|
-				ImdAwsDatum.xls_generation(website_url)
+				url = ImdAwsDatum.replace_common_parameter_values(website_url, website_url.url)
+				file_name = ImdAwsDatum.add_file_names(website_url, nil, website_url.webpage_elements.first.file_name)
+				file_name = Rails.root.to_s + "/" + file_name+".xls"
+				if File.exist?(file_name)
+					book = Spreadsheet.open(file_name)
+					File.delete(file_name)
+				else
+					book = Spreadsheet::Workbook.new
+				end
+				website_url.respective_parameter_groups.each do |respective_parameter_group|
+					respective_url = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, url)
+					ImdAwsDatum.xls_generation(website_url, respective_parameter_group, respective_url, file_name, book)
+				end
 			end
 		end
 	end
 
-	def self.url_generation(website_url)
-		url = website_url.url
-		# common_parameter = website_url.common_parameter
-		# if common_parameter.present?
-		# 	common_parameter_values = common_parameter.value.split(",")
-		# 	common_parameter.symbol.split(",").each_with_index do |symbol, index|
-		# 		url = url.gsub(symbol, common_parameter_values[index])
-		# 	end
-		# end
+	def self.replace_common_parameter_values(website_url, content)
 		website_url.common_parameters.each do |common_parameter|
-			url = url.gsub(common_parameter.symbol, common_parameter.value)
+			content = content.gsub(common_parameter.symbol, common_parameter.value)
 		end
-		url = File.open(url)
+		content
 	end
 
-	def self.xls_generation(website_url)
-		url = ImdAwsDatum.url_generation(website_url)
+	def self.replace_respective_parameter_values(website_url, respective_parameter_group, content)
+		if respective_parameter_group.present?
+			respective_parameter_group.respective_parameters.each do |respective_parameter|
+				content = content.gsub(respective_parameter.symbol, respective_parameter.value)
+			end
+		end
+		content
+	end
+
+	def self.add_file_names(website_url, respective_parameter_group, content)
+		sheet_name = ImdAwsDatum.replace_common_parameter_values(website_url, content)
+		sheet_name = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, sheet_name)
+	end
+
+	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book)
+		url = File.open(url) #temp
 		page = Nokogiri::HTML(url)
 		website_url.webpage_elements.each do |webpage_element|
-			Spreadsheet.client_encoding = 'UTF-8'
-			book = Spreadsheet::Workbook.new
-			sheet = book.create_worksheet :name => 'test'
+			sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
+			sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
 			sheet.row(0)[0] = page.css(webpage_element.heading_path).text
 			page.css(webpage_element.content_path).each_with_index do |tr_data, tr_index|
 				tr_data.css(webpage_element.data_path).each_with_index do |td_data, td_index|
@@ -108,8 +126,15 @@ class ImdAwsDatum < ActiveRecord::Base
 					end
 				end
 			end
-			book.write webpage_element.file_name + ".xls"
+			book.write file_name
 		end
+	end
+
+	def self.return_worksheet(book, sheet_name)
+		book.worksheets.each do |sheet|
+			return sheet if (sheet.name == sheet_name)
+		end
+		return book.create_worksheet :name => sheet_name
 	end
 
 	def self.parse_imd_aws_data(from_date, to_date, imd_state_code)

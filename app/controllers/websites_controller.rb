@@ -68,7 +68,8 @@ class WebsitesController < ApplicationController
             :data_path,
             :header,
             :merge_cells,
-            :file_name
+            :file_name,
+            :sheet_name
           ],
           respective_parameter_groups_attributes: [
             :id,

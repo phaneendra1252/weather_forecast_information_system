@@ -102,6 +102,7 @@ ActiveRecord::Schema.define(version: 20150131171530) do
     t.string   "header"
     t.string   "merge_cells"
     t.string   "file_name"
+    t.string   "sheet_name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

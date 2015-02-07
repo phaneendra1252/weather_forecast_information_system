@@ -7,6 +7,7 @@ class CreateWebpageElements < ActiveRecord::Migration
       t.string :header
       t.string :merge_cells
       t.string :file_name
+      t.string :sheet_name
       t.timestamps
     end
   end
