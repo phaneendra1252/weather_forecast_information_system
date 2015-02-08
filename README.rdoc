@@ -16,6 +16,15 @@ Header: Client_id, District, Mandal, Location, Soil_Moisture(Depth),,, Soil_Temp
 Merge cells: 1, 4, 1, 6&&1, 7, 1, 8
 
 1) http://www.imdaws.com/viewawsdata.aspx
+
+http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=06/02/2015&ToDate=06/02/2015&State=2&District=0&Loc=0&Time=
+
+http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=from_date&ToDate=to_date&State=state_id&District=0&Loc=0&Time=
+
+from_date 06/02/2015
+to_date 06/02/2015
+state_id 2
+
 state ap
 from date prev date
 to date prev date

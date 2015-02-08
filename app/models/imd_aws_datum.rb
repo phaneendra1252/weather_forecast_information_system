@@ -62,15 +62,15 @@ class ImdAwsDatum < ActiveRecord::Base
 		websites.each do |website|
 			website.website_urls.each do |website_url|
 				url = ImdAwsDatum.replace_common_parameter_values(website_url, website_url.url)
-				file_name = ImdAwsDatum.add_file_names(website_url, nil, website_url.webpage_elements.first.file_name)
-				file_name = Rails.root.to_s + "/" + file_name+".xls"
-				if File.exist?(file_name)
-					book = Spreadsheet.open(file_name)
-					File.delete(file_name)
-				else
-					book = Spreadsheet::Workbook.new
-				end
 				website_url.respective_parameter_groups.each do |respective_parameter_group|
+					file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_elements.first.file_name)
+					file_name = Rails.root.to_s + "/" + file_name+".xls"
+					if File.exist?(file_name)
+						book = Spreadsheet.open(file_name)
+						File.delete(file_name)
+					else
+						book = Spreadsheet::Workbook.new
+					end
 					respective_url = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, url)
 					ImdAwsDatum.xls_generation(website_url, respective_parameter_group, respective_url, file_name, book)
 				end
@@ -80,7 +80,8 @@ class ImdAwsDatum < ActiveRecord::Base
 
 	def self.replace_common_parameter_values(website_url, content)
 		website_url.common_parameters.each do |common_parameter|
-			content = content.gsub(common_parameter.symbol, common_parameter.value)
+			value = CommonParameter.add_date(common_parameter.value)
+			content = content.gsub(common_parameter.symbol, value)
 		end
 		content
 	end
@@ -88,7 +89,8 @@ class ImdAwsDatum < ActiveRecord::Base
 	def self.replace_respective_parameter_values(website_url, respective_parameter_group, content)
 		if respective_parameter_group.present?
 			respective_parameter_group.respective_parameters.each do |respective_parameter|
-				content = content.gsub(respective_parameter.symbol, respective_parameter.value)
+				value = CommonParameter.add_date(respective_parameter.value)
+				content = content.gsub(respective_parameter.symbol, value)
 			end
 		end
 		content
@@ -97,17 +99,34 @@ class ImdAwsDatum < ActiveRecord::Base
 	def self.add_file_names(website_url, respective_parameter_group, content)
 		sheet_name = ImdAwsDatum.replace_common_parameter_values(website_url, content)
 		sheet_name = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, sheet_name)
+		sheet_name.gsub("/", "-")
+	end
+
+	def self.tt
+		require 'rubygems'
+		require 'mechanize'
+		agent = Mechanize.new
+		page = agent.get('http://tawn.tnau.ac.in/')
+		page = agent.page.links.find { |l| l.text == 'Weather Data' }.click
+		# page.form.field_with(name: '').options[3].select
+		page = agent.get('http://tawn.tnau.ac.in/General/BlockLastDayWeatherDataPublicUI.aspx?EntityHierarchyOneKey=3&EntityHierarchyTwoKey=21&lang=en')
+		puts page.at('#DynamicWeatherDataDiv').text
+		# page.links.each do |link|
+		#   puts link.text
+		# end
 	end
 
 	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book)
-		url = File.open(url) #temp
-		page = Nokogiri::HTML(url)
+		# url = File.open(url) #temp
+		# page = Nokogiri::HTML(open(url))
+		agent = Mechanize.new
+		page = agent.get(url)
 		website_url.webpage_elements.each do |webpage_element|
 			sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
 			sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
-			sheet.row(0)[0] = page.css(webpage_element.heading_path).text
-			page.css(webpage_element.content_path).each_with_index do |tr_data, tr_index|
-				tr_data.css(webpage_element.data_path).each_with_index do |td_data, td_index|
+			sheet.row(0)[0] = page.at(webpage_element.heading_path).text if webpage_element.heading_path.present?
+			page.search(webpage_element.content_path).each_with_index do |tr_data, tr_index|
+				tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
 					sheet.row(tr_index+1)[td_index] = td_data.text
 				end
 			end

@@ -12,4 +12,16 @@ class CommonParameter < ActiveRecord::Base
     end
   end
 
+  def self.add_date(value)
+    v = value
+    if v.present?
+      v = v.split(",")
+      if v[0].present? && v[0].index("today").present?
+        v = v.map(&:strip)
+        return (Date.today + v[1].to_i).strftime(v[2])
+      end
+    end
+    value
+  end
+
 end

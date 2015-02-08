@@ -32,6 +32,7 @@ gem 'kaminari'
 gem 'nokogiri'
 gem 'roo'
 gem 'ransack'
+gem 'mechanize'
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
