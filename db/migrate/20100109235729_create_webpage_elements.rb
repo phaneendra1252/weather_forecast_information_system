@@ -1,6 +1,7 @@
 class CreateWebpageElements < ActiveRecord::Migration
   def self.up
     create_table :webpage_elements do |t|
+      t.integer :website_url_id
       t.string :heading_path
       t.string :content_path
       t.string :data_path

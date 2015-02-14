@@ -1,0 +1,11 @@
+.fields.container.add-border
+  .form-group.row
+    = f.label :content_path
+    = f.text_field :content_path, :autofocus => true
+    = f.label :data_path
+    = f.text_field :data_path, :autofocus => true
+    = f.label :symbol
+    = f.text_field :symbol, :autofocus => true
+    = f.label :data_type
+    = f.text_field :data_type, :autofocus => true
+    = link_to_remove_fields "remove", f

@@ -10,6 +10,6 @@
     = render 'respective_parameter_group_fields', :f => builder
   = link_to_add_fields "Add a respective parameter group", f, :respective_parameter_groups, "btn btn-default", "Add a new respective parameter group"
 
-  = f.fields_for :webpage_elements do |builder|
+  = f.fields_for :webpage_element do |builder|
     = render 'webpage_element_fields', :f => builder
-  = link_to_add_fields "Add webpage elements", f, :webpage_elements, "btn btn-default", "Add a new webpage element"
+  =# link_to_add_fields "Add webpage elements", f, :webpage_element, "btn btn-default", "Add a new webpage element"

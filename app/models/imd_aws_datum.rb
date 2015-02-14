@@ -1,5 +1,6 @@
 require 'open-uri'
 require 'spreadsheet'
+require 'rubyXL'
 class ImdAwsDatum < ActiveRecord::Base
 
 	TABLE_HEADER = {
@@ -63,13 +64,16 @@ class ImdAwsDatum < ActiveRecord::Base
 			website.website_urls.each do |website_url|
 				url = ImdAwsDatum.replace_common_parameter_values(website_url, website_url.url)
 				website_url.respective_parameter_groups.each do |respective_parameter_group|
-					file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_elements.first.file_name)
-					file_name = Rails.root.to_s + "/" + file_name+".xls"
+					# file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_elements.first.file_name)
+					file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_element.file_name)
+					file_name = Rails.root.to_s + "/" + file_name+".xlsx"
 					if File.exist?(file_name)
-						book = Spreadsheet.open(file_name)
-						File.delete(file_name)
+ 						book = RubyXL::Parser.parse(file_name)
+					# 	book = Spreadsheet.open(file_name)
+					# 	File.delete(file_name)
 					else
-						book = Spreadsheet::Workbook.new
+ 						book = RubyXL::Workbook.new
+					# 	book = Spreadsheet::Workbook.new
 					end
 					respective_url = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, url)
 					ImdAwsDatum.xls_generation(website_url, respective_parameter_group, respective_url, file_name, book)
@@ -116,44 +120,61 @@ class ImdAwsDatum < ActiveRecord::Base
 		# end
 	end
 
+	def self.final
+ 		workbook = RubyXL::Parser.parse("2.xlsx")
+ 		worksheet = workbook.worksheets[0]
+		worksheet = workbook[0]
+		# puts worksheet.sheet_data[1][2].value
+		# puts "&&&&&&&&&&&&&&"
+		# worksheet.sheet_data[1][2].change_contents("edited field111")
+		# worksheet.add_row(1, worksheet.sheet_data[1])
+		r = worksheet.insert_row(1)
+		r = worksheet.sheet_data[1]
+		# puts "**************"
+		# puts worksheet.sheet_data[1][2].value
+		workbook.write '2.xlsx'
+	end
 	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book)
 		# url = File.open(url) #temp
 		# page = Nokogiri::HTML(open(url))
 		agent = Mechanize.new
 		page = agent.get(url)
-		website_url.webpage_elements.each do |webpage_element|
+		webpage_element = website_url.webpage_element
+		# website_url.webpage_elements.each do |webpage_element|
 			sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
 			sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
-			sheet.row(0)[0] = page.at(webpage_element.heading_path).text if webpage_element.heading_path.present?
+			sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
 			page.search(webpage_element.content_path).each_with_index do |tr_data, tr_index|
 				tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
-					sheet.row(tr_index+1)[td_index] = td_data.text
+					sheet.add_cell(tr_index+1, td_index, td_data.text)
 				end
 			end
-			header = webpage_element.header
-			if header.present?
-				header = header.split("&&")
-				header.each_with_index do |header_value, header_index|
-					sheet.row(header_index+1).replace(header_value.split(",").map(&:strip))
-				end
-				merge_cells = webpage_element.merge_cells
-				if merge_cells.present?
-					merge_cells = merge_cells.split("&&")
-					merge_cells.each do |merge_cell|
-						r1, td1, r2, td2 = merge_cell.split(",").map(&:strip).map(&:to_i)
-						sheet.merge_cells(r1, td1, r2, td2)
-					end
-				end
-			end
+			# header = webpage_element.header
+			# if header.present?
+			# 	header = header.split("&&")
+			# 	header.each_with_index do |header_value, header_index|
+			# 		# sheet.row(header_index+1).replace(header_value.split(",").map(&:strip))
+			# 		sheet.sheet_data[header_index+1][td_index].change_contents(td_data.text)
+			# 	end
+			# 	merge_cells = webpage_element.merge_cells
+			# 	if merge_cells.present?
+			# 		merge_cells = merge_cells.split("&&")
+			# 		merge_cells.each do |merge_cell|
+			# 			r1, td1, r2, td2 = merge_cell.split(",").map(&:strip).map(&:to_i)
+			# 			sheet.merge_cells(r1, td1, r2, td2)
+			# 		end
+			# 	end
+			# end
 			book.write file_name
-		end
+		# end
 	end
 
 	def self.return_worksheet(book, sheet_name)
-		book.worksheets.each do |sheet|
-			return sheet if (sheet.name == sheet_name)
+		sheet = book[sheet_name]
+		if sheet.blank?
+			sheet = book.add_worksheet(sheet_name)
 		end
-		return book.create_worksheet :name => sheet_name
+		return sheet
 	end
 
 	def self.parse_imd_aws_data(from_date, to_date, imd_state_code)

@@ -33,6 +33,7 @@ gem 'nokogiri'
 gem 'roo'
 gem 'ransack'
 gem 'mechanize'
+gem 'rubyXL'
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 

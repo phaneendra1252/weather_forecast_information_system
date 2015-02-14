@@ -7,8 +7,9 @@ class CommonParameter < ActiveRecord::Base
   validate :check_symbol_in_url
 
   def check_symbol_in_url
-    if self.website_url.url.index(symbol).blank?
-      errors.add(:symbol, " doesn't exist in website url")
+    webpage_element = self.website_url.webpage_element
+    if self.website_url.url.index(symbol).blank? && webpage_element.file_name.index(symbol).blank? && webpage_element.sheet_name.index(symbol).blank?
+      errors.add(:symbol, " doesn't exist in website url or file_name or sheet_name")
     end
   end
 

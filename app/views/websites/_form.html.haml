@@ -13,6 +13,9 @@
       .form-group
         = f.label :name, "Website Name"
         = f.text_field :name, :autofocus => true
+      = f.fields_for :visits do |builder|
+        = render "visit_fields", :f => builder
+      = link_to_add_fields "Add a Visit", f, :visits, "btn btn-primary", "Add a new Visit"
       = f.fields_for :website_urls do |builder|
         = render "website_url_fields", :f => builder
       = link_to_add_fields "Add a Website Url", f, :website_urls, "btn btn-primary", "Add a new Website Url"
