@@ -14,12 +14,7 @@ class WebsitesController < ApplicationController
 
   def new
     @website = Website.new
-    website_url = @website.website_urls.build
-    visit = @website.visits.build
-    visit.visit_parameters.build
-    website_url.common_parameters.build
-    website_url.respective_parameter_groups.build.respective_parameters.build
-    website_url.build_webpage_element
+    build_objects
     respond_with(@website)
   end
 
@@ -47,6 +42,15 @@ class WebsitesController < ApplicationController
       @website = Website.find(params[:id])
     end
 
+    def build_objects
+      website_url = @website.website_urls.build
+      visit = @website.visits.build
+      visit.visit_parameters.build
+      website_url.common_parameters.build
+      website_url.respective_parameter_groups.build.respective_parameters.build
+      website_url.build_webpage_element
+    end
+
     def website_params
       params.require(:website).permit(
         :name,
@@ -61,7 +65,8 @@ class WebsitesController < ApplicationController
             :content_path,
             :data_path,
             :symbol,
-            :data_type
+            :data_type,
+            :ignore_value
           ]
         ],
         website_urls_attributes: [

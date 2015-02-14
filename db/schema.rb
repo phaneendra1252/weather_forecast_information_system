@@ -101,6 +101,7 @@ ActiveRecord::Schema.define(version: 20150214055418) do
     t.string   "data_path"
     t.string   "symbol"
     t.string   "data_type"
+    t.string   "ignore_value"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

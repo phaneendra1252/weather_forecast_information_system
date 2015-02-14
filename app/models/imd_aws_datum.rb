@@ -63,23 +63,75 @@ class ImdAwsDatum < ActiveRecord::Base
 		websites.each do |website|
 			website.website_urls.each do |website_url|
 				url = ImdAwsDatum.replace_common_parameter_values(website_url, website_url.url)
+				agent = ImdAwsDatum.visit_task(website_url)
 				website_url.respective_parameter_groups.each do |respective_parameter_group|
-					# file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_elements.first.file_name)
 					file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_element.file_name)
 					file_name = Rails.root.to_s + "/" + file_name+".xlsx"
 					if File.exist?(file_name)
  						book = RubyXL::Parser.parse(file_name)
-					# 	book = Spreadsheet.open(file_name)
-					# 	File.delete(file_name)
 					else
  						book = RubyXL::Workbook.new
-					# 	book = Spreadsheet::Workbook.new
 					end
 					respective_url = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, url)
-					ImdAwsDatum.xls_generation(website_url, respective_parameter_group, respective_url, file_name, book)
+					ImdAwsDatum.xls_generation(website_url, respective_parameter_group, respective_url, file_name, book, agent)
 				end
 			end
 		end
+	end
+
+	def self.visit_task(website_url)
+		agent = Mechanize.new
+		website = website_url.website
+		website.visits.each do |visit|
+			page = agent.get(visit.url)
+			visit_data = {}
+			visit.visit_parameters.each do |visit_parameter|
+				page.search(visit_parameter.content_path).each_with_index do |tr_data, tr_index|
+					tr_data.search(visit_parameter.data_path).each_with_index do |td_data, td_index|
+						visit_data[visit_parameter.symbol] ||= []
+						if visit_parameter.data_type == "text"
+							visit_data[visit_parameter.symbol] << td_data.text
+						else
+							visit_data[visit_parameter.symbol] << td_data.attr(visit_parameter.data_type)
+						end
+					end
+				end
+			end
+			keys = visit_data.keys
+			values_length = visit_data[keys.first].length
+			values_length.times do |i|
+				record = {}
+				keys.each do |key|
+					record.merge!({ key => visit_data[key][i] })
+				end
+				# ActiveRecord::Base.transaction do
+					respective_parameter = nil
+					respective_parameter_groups = website_url.respective_parameter_groups
+					record.each do |key, value|
+						if respective_parameter_groups.present?
+							respective_parameter_groups.each do |respective_parameter_group|
+								respective_parameter_group.respective_parameters.each do |rp|
+									if rp.symbol == key && rp.value == value
+										respective_parameter = rp
+										break
+									end
+								end
+							end
+						end
+					end
+					if respective_parameter.blank?
+						respective_parameter_group = respective_parameter_groups.new
+						record.each do |k, v|
+							respective_parameter = respective_parameter_group.respective_parameters.new
+							respective_parameter.symbol = k
+							respective_parameter.value = v
+							respective_parameter.save
+						end
+					end
+				# end
+			end
+		end
+		agent
 	end
 
 	def self.replace_common_parameter_values(website_url, content)
@@ -112,7 +164,6 @@ class ImdAwsDatum < ActiveRecord::Base
 		agent = Mechanize.new
 		page = agent.get('http://tawn.tnau.ac.in/')
 		page = agent.page.links.find { |l| l.text == 'Weather Data' }.click
-		# page.form.field_with(name: '').options[3].select
 		page = agent.get('http://tawn.tnau.ac.in/General/BlockLastDayWeatherDataPublicUI.aspx?EntityHierarchyOneKey=3&EntityHierarchyTwoKey=21&lang=en')
 		puts page.at('#DynamicWeatherDataDiv').text
 		# page.links.each do |link|
@@ -120,27 +171,12 @@ class ImdAwsDatum < ActiveRecord::Base
 		# end
 	end
 
-	def self.final
- 		workbook = RubyXL::Parser.parse("2.xlsx")
- 		worksheet = workbook.worksheets[0]
-		worksheet = workbook[0]
-		# puts worksheet.sheet_data[1][2].value
-		# puts "&&&&&&&&&&&&&&"
-		# worksheet.sheet_data[1][2].change_contents("edited field111")
-		# worksheet.add_row(1, worksheet.sheet_data[1])
-		r = worksheet.insert_row(1)
-		r = worksheet.sheet_data[1]
-		# puts "**************"
-		# puts worksheet.sheet_data[1][2].value
-		workbook.write '2.xlsx'
-	end
-	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book)
+	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book, agent)
 		# url = File.open(url) #temp
 		# page = Nokogiri::HTML(open(url))
-		agent = Mechanize.new
+
 		page = agent.get(url)
 		webpage_element = website_url.webpage_element
-		# website_url.webpage_elements.each do |webpage_element|
 			sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
 			sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
 			sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
@@ -149,6 +185,8 @@ class ImdAwsDatum < ActiveRecord::Base
 					sheet.add_cell(tr_index+1, td_index, td_data.text)
 				end
 			end
+			book.write file_name
+
 			# header = webpage_element.header
 			# if header.present?
 			# 	header = header.split("&&")
@@ -165,7 +203,6 @@ class ImdAwsDatum < ActiveRecord::Base
 			# 		end
 			# 	end
 			# end
-			book.write file_name
 		# end
 	end
 

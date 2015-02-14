@@ -6,6 +6,7 @@ class CreateVisitParameters < ActiveRecord::Migration
       t.string :data_path
       t.string :symbol
       t.string :data_type
+      t.string :ignore_value
       t.timestamps
     end
   end
