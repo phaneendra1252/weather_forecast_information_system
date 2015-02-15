@@ -4,7 +4,6 @@ class CreateCommonParameters < ActiveRecord::Migration
       t.integer :website_url_id
       t.string :symbol
       t.string :value
-
       t.timestamps
     end
   end

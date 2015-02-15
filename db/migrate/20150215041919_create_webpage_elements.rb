@@ -1,5 +1,5 @@
 class CreateWebpageElements < ActiveRecord::Migration
-  def self.up
+  def change
     create_table :webpage_elements do |t|
       t.integer :website_url_id
       t.string :heading_path
@@ -12,9 +12,5 @@ class CreateWebpageElements < ActiveRecord::Migration
       t.string :group_by_element
       t.timestamps
     end
-  end
-
-  def self.down
-    drop_table :webpage_elements
   end
 end
