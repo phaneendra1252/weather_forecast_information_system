@@ -62,19 +62,7 @@ class Website < ActiveRecord::Base
     website = website_url.website
     website.visits.each do |visit|
       page = agent.get(visit.url)
-      visit_data = {}
-      visit.visit_parameters.each do |visit_parameter|
-        page.search(visit_parameter.content_path).each_with_index do |tr_data, tr_index|
-          tr_data.search(visit_parameter.data_path).each_with_index do |td_data, td_index|
-            visit_data[visit_parameter.symbol] ||= []
-            if visit_parameter.data_type == "text"
-              visit_data[visit_parameter.symbol] << td_data.text
-            else
-              visit_data[visit_parameter.symbol] << td_data.attr(visit_parameter.data_type)
-            end
-          end
-        end
-      end
+      visit_data = Website.generate_visit_data(visit, page)
       keys = visit_data.keys
       values_length = visit_data[keys.first].length
       values_length.times do |i|
@@ -82,34 +70,55 @@ class Website < ActiveRecord::Base
         keys.each do |key|
           record.merge!({ key => visit_data[key][i] })
         end
-        # ActiveRecord::Base.transaction do
-          respective_parameter = nil
-          respective_parameter_groups = website_url.respective_parameter_groups
-          record.each do |key, value|
-            if respective_parameter_groups.present?
-              respective_parameter_groups.each do |respective_parameter_group|
-                respective_parameter_group.respective_parameters.each do |rp|
-                  if rp.symbol == key && rp.value == value
-                    respective_parameter = rp
-                    break
-                  end
-                end
-              end
-            end
-          end
-          if respective_parameter.blank?
-            respective_parameter_group = respective_parameter_groups.new
-            record.each do |k, v|
-              respective_parameter = respective_parameter_group.respective_parameters.new
-              respective_parameter.symbol = k
-              respective_parameter.value = v
-              respective_parameter.save
-            end
-          end
-        # end
+        Website.create_respective_parameters(record, website_url)
       end
     end
     agent
+  end
+
+  def self.generate_visit_data(visit, page)
+    visit_data = {}
+    visit.visit_parameters.each do |visit_parameter|
+      page.search(visit_parameter.content_path).each_with_index do |tr_data, tr_index|
+        tr_data.search(visit_parameter.data_path).each_with_index do |td_data, td_index|
+          visit_data[visit_parameter.symbol] ||= []
+          if visit_parameter.data_type == "text"
+            visit_data[visit_parameter.symbol] << td_data.text
+          else
+            visit_data[visit_parameter.symbol] << td_data.attr(visit_parameter.data_type)
+          end
+        end
+      end
+    end
+    return visit_data
+  end
+
+  def self.create_respective_parameters(record, website_url)
+    # ActiveRecord::Base.transaction do
+      respective_parameter = nil
+      respective_parameter_groups = website_url.respective_parameter_groups
+      record.each do |key, value|
+        if respective_parameter_groups.present?
+          respective_parameter_groups.each do |respective_parameter_group|
+            respective_parameter_group.respective_parameters.each do |rp|
+              if rp.symbol == key && rp.value == value
+                respective_parameter = rp
+                break
+              end
+            end
+          end
+        end
+      end
+      if respective_parameter.blank?
+        respective_parameter_group = respective_parameter_groups.new
+        record.each do |k, v|
+          respective_parameter = respective_parameter_group.respective_parameters.new
+          respective_parameter.symbol = k
+          respective_parameter.value = v
+          respective_parameter.save
+        end
+      end
+    # end
   end
 
   def self.replace_common_parameter_values(website_url, content)
@@ -141,37 +150,13 @@ class Website < ActiveRecord::Base
     group_by_element = webpage_element.group_by_element
     data_path = webpage_element.data_path
     sheet_name = webpage_element.sheet_name
-    index = nil
-    collection_data = {}
-    data.each do |trs|
-      if index.blank?
-        trs.search(data_path).each_with_index do |td, i|
-          if index.blank? && td.text.strip == group_by_element
-            index = i
-            break
-          end
-        end
-      end
-      break if index.present?
-    end
-    data.each do |trs|
-      if index.present?
-        td_search = trs.search(data_path)
-        group_by_data = td_search[index]
-        if group_by_data.present?
-          if collection_data.keys.index(group_by_data.text).blank?
-            collection_data.merge!({ group_by_data.text => [td_search] })
-          else
-            collection_data[group_by_data.text] << td_search
-          end
-        end
-      end
-    end
-    if collection_data[group_by_element].present?
-      header_length = collection_data[group_by_element].length
-    else
-      header_length = 0
-    end
+    index = Website.find_index_of_column(data, data_path, group_by_element)
+    generated_data = Website.generate_data_from_webpage(data, index, data_path, group_by_element)
+    collection_data, header_length = generated_data[0], generated_data[1]
+    Website.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_length)
+  end
+
+  def self.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_length)
     collection_data.each do |k, v|
       if k != group_by_element
         file_name = Website.return_file_path(k)
@@ -193,6 +178,45 @@ class Website < ActiveRecord::Base
     end
   end
 
+  def self.generate_data_from_webpage(data, index, data_path, group_by_element)
+    collection_data = {}
+    data.each do |trs|
+      if index.present?
+        td_search = trs.search(data_path)
+        group_by_data = td_search[index]
+        if group_by_data.present?
+          if collection_data.keys.index(group_by_data.text).blank?
+            collection_data.merge!({ group_by_data.text => [td_search] })
+          else
+            collection_data[group_by_data.text] << td_search
+          end
+        end
+      end
+    end
+    if collection_data[group_by_element].present?
+      header_length = collection_data[group_by_element].length
+    else
+      header_length = 0
+    end
+    return [collection_data, header_length]
+  end
+
+  def self.find_index_of_column(data, data_path, group_by_element)
+    index = nil
+    data.each do |trs|
+      if index.blank?
+        trs.search(data_path).each_with_index do |td, i|
+          if index.blank? && td.text.strip == group_by_element
+            index = i
+            break
+          end
+        end
+      end
+      break if index.present?
+    end
+    return index
+  end
+
   def self.xls_generation(website_url, respective_parameter_group, url, file_name, book, agent, group_by_element)
     page = agent.get(url)
     webpage_element = website_url.webpage_element
@@ -203,23 +227,25 @@ class Website < ActiveRecord::Base
     else
       Website.group_by_sheet(page, webpage_element)
     end
-      # header = webpage_element.header
-      # if header.present?
-      #   header = header.split("&&")
-      #   header.each_with_index do |header_value, header_index|
-      #     # sheet.row(header_index+1).replace(header_value.split(",").map(&:strip))
-      #     sheet.sheet_data[header_index+1][td_index].change_contents(td_data.text)
-      #   end
-      #   merge_cells = webpage_element.merge_cells
-      #   if merge_cells.present?
-      #     merge_cells = merge_cells.split("&&")
-      #     merge_cells.each do |merge_cell|
-      #       r1, td1, r2, td2 = merge_cell.split(",").map(&:strip).map(&:to_i)
-      #       sheet.merge_cells(r1, td1, r2, td2)
-      #     end
-      #   end
-      # end
-    # end
+    Website.generate_header(webpage_element, sheet)
+  end
+
+  def self.generate_header(webpage_element, sheet)
+    header = webpage_element.header
+    if header.present?
+      header = header.split("&&")
+      header.each_with_index do |header_value, header_index|
+        sheet.row(header_index+1).replace(header_value.split(",").map(&:strip))
+      end
+      merge_cells = webpage_element.merge_cells
+      if merge_cells.present?
+        merge_cells = merge_cells.split("&&")
+        merge_cells.each do |merge_cell|
+          r1, td1, r2, td2 = merge_cell.split(",").map(&:strip).map(&:to_i)
+          sheet.merge_cells(r1, td1, r2, td2)
+        end
+      end
+    end
   end
 
   def self.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
