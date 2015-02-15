@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150215042119) do
+ActiveRecord::Schema.define(version: 20150215123423) do
 
   create_table "common_parameters", force: true do |t|
     t.integer  "website_url_id"
@@ -35,6 +35,13 @@ ActiveRecord::Schema.define(version: 20150215042119) do
 
   create_table "roles", force: true do |t|
     t.string   "name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "settings", force: true do |t|
+    t.string   "key"
+    t.string   "value"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

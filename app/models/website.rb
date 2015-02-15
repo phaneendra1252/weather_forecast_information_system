@@ -45,7 +45,11 @@ class Website < ActiveRecord::Base
 
   def self.return_file_path(file_name)
     if file_name.present?
-      return Rails.root.to_s + "/" + file_name+".xlsx"
+      file_name = file_name.titleize.gsub(" ", "-").gsub("/", "-")
+      file_path = Setting.find_by(key: "file_path")
+      if file_path.present?
+        return file_path.value + "/" + file_name+".xlsx"
+      end
     end
   end
 
