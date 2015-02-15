@@ -64,19 +64,45 @@ class ImdAwsDatum < ActiveRecord::Base
 			website.website_urls.each do |website_url|
 				url = ImdAwsDatum.replace_common_parameter_values(website_url, website_url.url)
 				agent = ImdAwsDatum.visit_task(website_url)
-				website_url.respective_parameter_groups.each do |respective_parameter_group|
-					file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_element.file_name)
-					file_name = Rails.root.to_s + "/" + file_name+".xlsx"
-					if File.exist?(file_name)
- 						book = RubyXL::Parser.parse(file_name)
-					else
- 						book = RubyXL::Workbook.new
+				respective_parameter_groups = website_url.respective_parameter_groups
+				if respective_parameter_groups.present?
+					respective_parameter_groups.each do |respective_parameter_group|
+						file_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, website_url.webpage_element.file_name)
+						file_name = ImdAwsDatum.return_file_path(file_name)
+						book = ImdAwsDatum.return_workbook(file_name)
+						respective_url = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, url)
+						ImdAwsDatum.xls_generation(website_url, respective_parameter_group, respective_url, file_name, book, agent, nil)
 					end
-					respective_url = ImdAwsDatum.replace_respective_parameter_values(website_url, respective_parameter_group, url)
-					ImdAwsDatum.xls_generation(website_url, respective_parameter_group, respective_url, file_name, book, agent)
+				else
+					webpage_element = website_url.webpage_element
+					file_name = ImdAwsDatum.return_file_name(webpage_element)
+					file_name = ImdAwsDatum.return_file_path(file_name)
+					book = ImdAwsDatum.return_workbook(file_name)
+					self.xls_generation(website_url, nil, url, file_name, book, agent, webpage_element.group_by_element)
 				end
 			end
 		end
+	end
+
+	def self.return_workbook(file_name)
+		if file_name.present?
+			if File.exist?(file_name)
+				book = RubyXL::Parser.parse(file_name)
+			else
+				book = RubyXL::Workbook.new
+			end
+			return book
+		end
+	end
+
+	def self.return_file_path(file_name)
+		if file_name.present?
+			return Rails.root.to_s + "/" + file_name+".xlsx"
+		end
+	end
+
+	def self.return_file_name(webpage_element)
+		return webpage_element.file_name
 	end
 
 	def self.visit_task(website_url)
@@ -158,35 +184,73 @@ class ImdAwsDatum < ActiveRecord::Base
 		sheet_name.gsub("/", "-")
 	end
 
-	def self.tt
-		require 'rubygems'
-		require 'mechanize'
-		agent = Mechanize.new
-		page = agent.get('http://tawn.tnau.ac.in/')
-		page = agent.page.links.find { |l| l.text == 'Weather Data' }.click
-		page = agent.get('http://tawn.tnau.ac.in/General/BlockLastDayWeatherDataPublicUI.aspx?EntityHierarchyOneKey=3&EntityHierarchyTwoKey=21&lang=en')
-		puts page.at('#DynamicWeatherDataDiv').text
-		# page.links.each do |link|
-		#   puts link.text
-		# end
-	end
-
-	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book, agent)
-		# url = File.open(url) #temp
-		# page = Nokogiri::HTML(open(url))
-
-		page = agent.get(url)
-		webpage_element = website_url.webpage_element
-			sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
-			sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
-			sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
-			page.search(webpage_element.content_path).each_with_index do |tr_data, tr_index|
-				tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
-					sheet.add_cell(tr_index+1, td_index, td_data.text)
+	def self.group_by_sheet(page, webpage_element)
+		data = page.search(webpage_element.content_path)
+		group_by_element = webpage_element.group_by_element
+		data_path = webpage_element.data_path
+		sheet_name = webpage_element.sheet_name
+		index = nil
+		collection_data = {}
+		data.each do |trs|
+			if index.blank?
+				trs.search(data_path).each_with_index do |td, i|
+					if index.blank? && td.text.strip == group_by_element
+						index = i
+						break
+					end
 				end
 			end
-			book.write file_name
+			break if index.present?
+		end
+		data.each do |trs|
+			if index.present?
+				td_search = trs.search(data_path)
+				group_by_data = td_search[index]
+				if group_by_data.present?
+					if collection_data.keys.index(group_by_data.text).blank?
+						collection_data.merge!({ group_by_data.text => [td_search] })
+					else
+						collection_data[group_by_data.text] << td_search
+					end
+				end
+			end
+		end
+		if collection_data[group_by_element].present?
+			header_length = collection_data[group_by_element].length
+		else
+			header_length = 0
+		end
+		collection_data.each do |k, v|
+			if k != group_by_element
+				file_name = ImdAwsDatum.return_file_path(k)
+				book = ImdAwsDatum.return_workbook(file_name)
+				sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
+				sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+				collection_data[group_by_element].each_with_index do |header_row, header_index|
+					header_row.each_with_index do |header_data, header_data_index|
+						sheet.add_cell(header_index+1, header_data_index, header_data.text)
+					end
+				end
+				v.each_with_index do |row, tr_index|
+					row.each_with_index do |td_data, td_index|
+						sheet.add_cell(tr_index+1+header_length, td_index, td_data.text)
+					end
+				end
+				book.write file_name
+			end
+		end
+	end
 
+	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book, agent, group_by_element)
+		# page = agent.get(url)
+		# webpage_element = website_url.webpage_element
+		# if group_by_element.blank?
+		# 	sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
+		# 	sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
+		# 	ImdAwsDatum.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
+		# else
+		# 	ImdAwsDatum.group_by_sheet(page, webpage_element)
+		# end
 			# header = webpage_element.header
 			# if header.present?
 			# 	header = header.split("&&")
@@ -206,10 +270,25 @@ class ImdAwsDatum < ActiveRecord::Base
 		# end
 	end
 
+	def self.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
+		sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+		page.search(webpage_element.content_path).each_with_index do |tr_data, tr_index|
+			tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
+				sheet.add_cell(tr_index+1, td_index, td_data.text)
+			end
+		end
+		book.write file_name
+	end
+
 	def self.return_worksheet(book, sheet_name)
 		sheet = book[sheet_name]
 		if sheet.blank?
-			sheet = book.add_worksheet(sheet_name)
+			sheet_name = CommonParameter.add_date(sheet_name)
+			sheet_name = sheet_name.gsub("/", "-")
+			sheet = book[sheet_name]
+			if sheet.blank?
+				sheet = book.add_worksheet(sheet_name)
+			end
 		end
 		return sheet
 	end

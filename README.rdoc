@@ -138,3 +138,30 @@ Departmental Website for all sites.=> Weather observations daily observations.
 
 
 Weather Observations => Daily Observations
+
+    # page = agent.page.links.find { |l| l.text == 'Weather Data' }.click
+    # puts page.at('#DynamicWeatherDataDiv').text
+    # page.links.each do |link|
+    #   puts link.text
+    # end
+
+  # def self.testingx
+  #   book = RubyXL::Parser.parse("ASSAM.xlsx")
+  #   sheet = book["13-02-2015"]
+  #   group_by = "STATION NAME"
+  #   sheet_name = "Date & Time"
+  #   index = nil
+  #   uniq_group_by_data = { group_by => [] }
+  #   sheet.extract_data.compact.each do |values| 
+  #     values.each_with_index do |v, i|
+  #       if index.blank? && v == group_by
+  #         index = i
+  #         break
+  #       end
+  #     end
+  #     if index.present?
+  #       uniq_group_by_data[group_by] << values[index] if uniq_group_by_data[group_by].index(values[index]).blank? && values[index] != group_by
+  #     end
+  #   end
+  #   puts uniq_group_by_data.inspect
+  # end
