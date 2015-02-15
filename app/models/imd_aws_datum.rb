@@ -242,15 +242,15 @@ class ImdAwsDatum < ActiveRecord::Base
 	end
 
 	def self.xls_generation(website_url, respective_parameter_group, url, file_name, book, agent, group_by_element)
-		# page = agent.get(url)
-		# webpage_element = website_url.webpage_element
-		# if group_by_element.blank?
-		# 	sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
-		# 	sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
-		# 	ImdAwsDatum.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
-		# else
-		# 	ImdAwsDatum.group_by_sheet(page, webpage_element)
-		# end
+		page = agent.get(url)
+		webpage_element = website_url.webpage_element
+		if group_by_element.blank?
+			sheet_name = ImdAwsDatum.add_file_names(website_url, respective_parameter_group, webpage_element.sheet_name)
+			sheet = ImdAwsDatum.return_worksheet(book, sheet_name)
+			ImdAwsDatum.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
+		else
+			ImdAwsDatum.group_by_sheet(page, webpage_element)
+		end
 			# header = webpage_element.header
 			# if header.present?
 			# 	header = header.split("&&")
