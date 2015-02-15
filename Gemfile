@@ -30,8 +30,6 @@ gem 'cancan'
 gem 'haml'
 gem 'kaminari'
 gem 'nokogiri'
-gem 'roo'
-gem 'ransack'
 gem 'mechanize'
 gem 'rubyXL'
 # Use ActiveModel has_secure_password

@@ -1,19 +1,9 @@
 Rails.application.routes.draw do
   resources :websites
-
-  resources :imd_states
-  resources :imd_aws_data do
-    match 'advanced_search' => 'imd_aws_data#advanced_search', on: :collection, via: [:get, :post], as: :advanced_search
-  end
-  resources :parse_websites, only: [:index] do
-    collection do
-      get :parse_imd_aws_data
-    end
-  end
   devise_for :users, controllers: {registrations: "users/registrations", sessions: "sessions"}
   resources :roles
   resources :users, only: [:index, :edit, :new, :create, :update, :destroy]
-  root 'imd_aws_data#index'
+  root 'websites#index'
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 

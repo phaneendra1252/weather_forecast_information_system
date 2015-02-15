@@ -1,9 +1,0 @@
-%div{ class: 'fields condition', 'data-object-name' => f.object_name }
-  = f.attribute_fields do |a|
-    = render :partial => 'ransack/attribute_fields', locals: { f: a, associations: associations }
-  - options = [:eq, :eq_any, :not_eq, :not_eq_any, :lt, :lteq, :gt, :gteq, :in, :not_in, :cont, :cont_any, :not_cont, :not_cont_any, :present, :blank, :true, :false]
-  = f.predicate_select only: options, compounds: false
-  = f.value_fields do |v|
-    = render 'ransack/value_fields', f: v
-  = render 'ransack/render_fields', f: f, type: :value, name: 'Add Value', associations: associations
-  %button{ class: 'remove_fields' } remove
