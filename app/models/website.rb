@@ -380,7 +380,12 @@ class Website < ActiveRecord::Base
   end
 
   def self.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
-    sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+    heading = ""
+    if webpage_element.heading_path.present?
+      heading = page.at(webpage_element.heading_path).text
+      heading = heading.gsub("\302\240", ' ').gsub("\r\n", "").gsub("\t"," ").strip.squeeze
+    end
+    sheet.add_cell(0, 0, heading)
     header_length = Website.generate_header(page, sheet, webpage_element)
     page.search(webpage_element.content_path).each_with_index do |tr_data, tr_index|
       tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|

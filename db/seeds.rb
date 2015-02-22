@@ -19,45 +19,84 @@ setting = Setting.where(key: "file_path").first_or_initialize
 setting.value = "/home/surya/project_files/wfis"
 setting.save
 
-# Imdaws data start
-website = Website.where(name: "imd_aws").first_or_create
+# imd_gov_in start
 
-visit = Visit.where(website_id: website.id, url: "http://www.imdaws.com/viewawsdata.aspx").first_or_create
+website = Website.where(name: "imd_gov_in").first_or_create
 
-visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_id").first_or_initialize
-visit_parameter.content_path = "#CmbState"
-visit_parameter.data_path = "option"
-visit_parameter.data_type = "value"
-visit_parameter.ignore_value = "0"
-visit_parameter.save
-
-visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_name").first_or_initialize
-visit_parameter.content_path = "#CmbState"
-visit_parameter.data_path = "option"
-visit_parameter.data_type = "text"
-visit_parameter.ignore_value = "All States"
-visit_parameter.save
-
-website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=from_date&ToDate=to_date&State=state_id&District=0&Loc=0&Time=").first_or_create
-
-common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "from_date").first_or_initialize
-common_parameter.value = "today, -1, %d/%m/%Y"
-common_parameter.save
-
-common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "to_date").first_or_initialize
-common_parameter.value = "today, -1, %d/%m/%Y"
-common_parameter.save
+website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/apsite/apobs.html").first_or_create
 
 webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-webpage_element.heading_path = ""
-webpage_element.content_path = "#DeviceData tr:not(:nth-child(1))"
+webpage_element.heading_path = "table tr:nth-child(1)"
+webpage_element.content_path = "table tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
-webpage_element.header = "#DeviceData tr:nth-child(1)"
-webpage_element.file_name = "state_name"
+webpage_element.header = "table tr:nth-child(2)"
+webpage_element.file_name = "andhra_pradesh"
 webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
 
-# Imdaws data end
+website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/tssite/tlngobs.htm").first_or_create
+
+webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+webpage_element.heading_path = "table tr:nth-child(1)"
+webpage_element.content_path = "table tr:not(:nth-child(1)):not(:nth-child(2))"
+webpage_element.data_path = "td"
+webpage_element.header = "table tr:nth-child(2)"
+webpage_element.file_name = "telangana"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+webpage_element.save
+
+website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdchennai.gov.in/obs_data.htm").first_or_create
+
+webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+webpage_element.heading_path = "#table1 tr:nth-child(1)"
+webpage_element.content_path = "#table1 tr:not(:nth-child(1)):not(:nth-child(2))"
+webpage_element.data_path = "td"
+webpage_element.header = "#table1 tr:nth-child(2)"
+webpage_element.file_name = "tamilnadu"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+webpage_element.save
+
+# imd_gov_in end
+
+# # Imdaws data start
+# website = Website.where(name: "imd_aws").first_or_create
+
+# visit = Visit.where(website_id: website.id, url: "http://www.imdaws.com/viewawsdata.aspx").first_or_create
+
+# visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_id").first_or_initialize
+# visit_parameter.content_path = "#CmbState"
+# visit_parameter.data_path = "option"
+# visit_parameter.data_type = "value"
+# visit_parameter.ignore_value = "0"
+# visit_parameter.save
+
+# visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_name").first_or_initialize
+# visit_parameter.content_path = "#CmbState"
+# visit_parameter.data_path = "option"
+# visit_parameter.data_type = "text"
+# visit_parameter.ignore_value = "All States"
+# visit_parameter.save
+
+# website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=from_date&ToDate=to_date&State=state_id&District=0&Loc=0&Time=").first_or_create
+
+# common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "from_date").first_or_initialize
+# common_parameter.value = "today, -1, %d/%m/%Y"
+# common_parameter.save
+
+# common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "to_date").first_or_initialize
+# common_parameter.value = "today, -1, %d/%m/%Y"
+# common_parameter.save
+
+# webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+# webpage_element.heading_path = ""
+# webpage_element.content_path = "#DeviceData tr:not(:nth-child(1))"
+# webpage_element.data_path = "td"
+# webpage_element.header = "#DeviceData tr:nth-child(1)"
+# webpage_element.file_name = "state_name"
+# webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+# webpage_element.save
+
+# # Imdaws data end
 
 # # Tamilnadu data start
 # website = Website.where(name: "tamilnadu_data").first_or_create
