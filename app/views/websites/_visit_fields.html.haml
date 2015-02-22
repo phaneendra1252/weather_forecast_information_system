@@ -6,3 +6,6 @@
   = f.fields_for :visit_parameters do |builder|
     = render 'visit_parameter_fields', :f => builder
   = link_to_add_fields "Add a visit parameter", f, :visit_parameters, "btn btn-default", "Add a new visit parameter"
+  = f.fields_for :respective_visits do |builder|
+    = render 'respective_visit_fields', :f => builder
+  = link_to_add_fields "Add a respective visit", f, :respective_visits, "btn btn-default", "Add a new respective visit"

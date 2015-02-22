@@ -14,3 +14,7 @@ if User.where(email: "ganni.phaneendra@gmail.com").blank?
 	user.role_ids = [admin_role.id, moderator_role.id]
 	user.save
 end
+
+setting = Setting.where(key: "file_path").first_or_initialize
+setting.value = "/home/surya/project_files/wfis"
+setting.save

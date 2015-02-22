@@ -46,6 +46,7 @@ class WebsitesController < ApplicationController
       website_url = @website.website_urls.build
       visit = @website.visits.build
       visit.visit_parameters.build
+      visit.respective_visits.build
       website_url.common_parameters.build
       website_url.respective_parameter_groups.build.respective_parameters.build
       website_url.build_webpage_element
@@ -62,6 +63,17 @@ class WebsitesController < ApplicationController
           visit_parameters_attributes: [
             :id,
             :_destroy,
+            :content_path,
+            :data_path,
+            :symbol,
+            :data_type,
+            :ignore_value,
+            :visit_parameter_url
+          ],
+          respective_visits_attributes: [
+            :id,
+            :_destroy,
+            :visit_id,
             :content_path,
             :data_path,
             :symbol,
