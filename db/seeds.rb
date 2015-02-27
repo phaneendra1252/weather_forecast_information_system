@@ -19,44 +19,44 @@ setting = Setting.where(key: "file_path").first_or_initialize
 setting.value = "/home/surya/project_files/wfis"
 setting.save
 
-# imd_gov_in start
+# # imd_gov_in start
 
-website = Website.where(name: "imd_gov_in").first_or_create
+# website = Website.where(name: "imd_gov_in").first_or_create
 
-website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/apsite/apobs.html").first_or_create
+# website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/apsite/apobs.html").first_or_create
 
-webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-webpage_element.heading_path = "table tr:nth-child(1)"
-webpage_element.content_path = "table tr:not(:nth-child(1)):not(:nth-child(2))"
-webpage_element.data_path = "td"
-webpage_element.header = "table tr:nth-child(2)"
-webpage_element.file_name = "andhra_pradesh"
-webpage_element.sheet_name = "today, -1, %d/%m/%Y"
-webpage_element.save
+# webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+# webpage_element.heading_path = "table tr:nth-child(1)"
+# webpage_element.content_path = "table tr:not(:nth-child(1)):not(:nth-child(2))"
+# webpage_element.data_path = "td"
+# webpage_element.header = "table tr:nth-child(2)"
+# webpage_element.file_name = "andhra_pradesh"
+# webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+# webpage_element.save
 
-website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/tssite/tlngobs.htm").first_or_create
+# website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/tssite/tlngobs.htm").first_or_create
 
-webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-webpage_element.heading_path = "table tr:nth-child(1)"
-webpage_element.content_path = "table tr:not(:nth-child(1)):not(:nth-child(2))"
-webpage_element.data_path = "td"
-webpage_element.header = "table tr:nth-child(2)"
-webpage_element.file_name = "telangana"
-webpage_element.sheet_name = "today, -1, %d/%m/%Y"
-webpage_element.save
+# webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+# webpage_element.heading_path = "table tr:nth-child(1)"
+# webpage_element.content_path = "table tr:not(:nth-child(1)):not(:nth-child(2))"
+# webpage_element.data_path = "td"
+# webpage_element.header = "table tr:nth-child(2)"
+# webpage_element.file_name = "telangana"
+# webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+# webpage_element.save
 
-website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdchennai.gov.in/obs_data.htm").first_or_create
+# website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdchennai.gov.in/obs_data.htm").first_or_create
 
-webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-webpage_element.heading_path = "#table1 tr:nth-child(1)"
-webpage_element.content_path = "#table1 tr:not(:nth-child(1)):not(:nth-child(2))"
-webpage_element.data_path = "td"
-webpage_element.header = "#table1 tr:nth-child(2)"
-webpage_element.file_name = "tamilnadu"
-webpage_element.sheet_name = "today, -1, %d/%m/%Y"
-webpage_element.save
+# webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+# webpage_element.heading_path = "#table1 tr:nth-child(1)"
+# webpage_element.content_path = "#table1 tr:not(:nth-child(1)):not(:nth-child(2))"
+# webpage_element.data_path = "td"
+# webpage_element.header = "#table1 tr:nth-child(2)"
+# webpage_element.file_name = "tamilnadu"
+# webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+# webpage_element.save
 
-# imd_gov_in end
+# # imd_gov_in end
 
 # # Imdaws data start
 # website = Website.where(name: "imd_aws").first_or_create

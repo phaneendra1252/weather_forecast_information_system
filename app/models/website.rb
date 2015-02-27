@@ -19,7 +19,7 @@ class Website < ActiveRecord::Base
           respective_parameter_groups.each do |respective_parameter_group|
             respective_parameters = RespectiveParameter.includes(:respective_parameter_group).where('respective_parameter_group_id = ?', respective_parameter_group.id)
             file_name = Website.add_file_names(website_url, respective_parameters, website_url.webpage_element.file_name)
-            file_name = Website.return_file_path(file_name)
+            file_name = Website.return_file_path(file_name, website_url.webpage_element, respective_parameters)
             book = Website.return_workbook(file_name)
             respective_url = Website.replace_respective_parameter_values(url, respective_parameters)
             Website.xls_generation(website_url, respective_parameters, respective_url, file_name, book, agent, nil)
@@ -27,7 +27,7 @@ class Website < ActiveRecord::Base
         else
           webpage_element = website_url.webpage_element
           file_name = Website.return_file_name(webpage_element)
-          file_name = Website.return_file_path(file_name)
+          file_name = Website.return_file_path(file_name, webpage_element, respective_parameters)
           book = Website.return_workbook(file_name)
           Website.xls_generation(website_url, nil, url, file_name, book, agent, webpage_element.group_by_element)
         end
@@ -46,14 +46,25 @@ class Website < ActiveRecord::Base
     end
   end
 
-  def self.return_file_path(file_name)
+  def self.return_file_path(file_name, webpage_element, respective_parameters)
+    file_path = Setting.find_by(key: "file_path")
     if file_name.present?
       file_name = file_name.titleize.gsub(" ", "-").gsub("/", "-")
-      file_path = Setting.find_by(key: "file_path")
       if file_path.present?
-        return file_path.value + "/" + file_name+".xlsx"
+        file_path = file_path.value
       end
     end
+    merge_cells = webpage_element.merge_cells
+    if webpage_element.merge_cells.present?
+      #hard coded
+      merge_cells = merge_cells.gsub("year", (Date.today-1).strftime("%Y"))
+      merge_cells = merge_cells.gsub("month", (Date.today-1).strftime("%B"))
+      merge_cells = "/" + merge_cells unless merge_cells[0] == "/"
+      merge_cells_path = Website.replace_matched_data(webpage_element.website_url, respective_parameters, merge_cells)
+      file_path = file_path  + merge_cells_path if merge_cells_path.present?
+      FileUtils::mkdir_p(file_path)
+    end
+    file_path = file_path + "/" + file_name+".xlsx"
   end
 
   def self.return_file_name(webpage_element)
@@ -270,46 +281,44 @@ class Website < ActiveRecord::Base
   end
 
   def self.add_file_names(website_url, respective_parameters, content)
+    Website.replace_matched_data(website_url, respective_parameters, content).gsub("/", "-")
+  end
+
+  def self.replace_matched_data(website_url, respective_parameters, content)
     sheet_name = Website.replace_common_parameter_values(website_url, content)
     sheet_name = Website.replace_respective_parameter_values(sheet_name, respective_parameters)
     sheet_name = CommonParameter.add_date(sheet_name)
-    sheet_name.gsub("/", "-")
   end
 
-  def self.group_by_sheet(page, webpage_element)
+  def self.group_by_sheet(page, webpage_element, respective_parameters)
+    header_data = page.search(webpage_element.header)
     data = page.search(webpage_element.content_path)
     group_by_element = webpage_element.group_by_element
     data_path = webpage_element.data_path
     sheet_name = webpage_element.sheet_name
-    index = Website.find_index_of_column(data, data_path, group_by_element)
-    generated_data = Website.generate_data_from_webpage(data, index, data_path, group_by_element)
+    index = Website.find_index_of_column(header_data, data_path, group_by_element)
+    generated_data = Website.generate_data_from_webpage(data, index, data_path, group_by_element, header_data)
     collection_data, header_length = generated_data[0], generated_data[1]
-    Website.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_length)
+    Website.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_data, respective_parameters)
   end
 
-  def self.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_length)
+  def self.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_data, respective_parameters)
     collection_data.each do |k, v|
-      if k != group_by_element
-        file_name = Website.return_file_path(k)
-        book = Website.return_workbook(file_name)
-        sheet = Website.return_worksheet(book, sheet_name)
-        sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
-        collection_data[group_by_element].each_with_index do |header_row, header_index|
-          header_row.each_with_index do |header_data, header_data_index|
-            sheet.add_cell(header_index+1, header_data_index, header_data.text)
-          end
+      file_name = Website.return_file_path(k, webpage_element, respective_parameters)
+      book = Website.return_workbook(file_name)
+      sheet = Website.return_worksheet(book, sheet_name)
+      sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+      header_length = Website.generate_header(page, sheet, webpage_element)
+      v.each_with_index do |row, tr_index|
+        row.each_with_index do |td_data, td_index|
+          sheet.add_cell(tr_index+1+header_length, td_index, td_data.text)
         end
-        v.each_with_index do |row, tr_index|
-          row.each_with_index do |td_data, td_index|
-            sheet.add_cell(tr_index+1+header_length, td_index, td_data.text)
-          end
-        end
-        book.write file_name
       end
+      book.write file_name
     end
   end
 
-  def self.generate_data_from_webpage(data, index, data_path, group_by_element)
+  def self.generate_data_from_webpage(data, index, data_path, group_by_element, header_data)
     collection_data = {}
     data.each do |trs|
       if index.present?
@@ -324,11 +333,7 @@ class Website < ActiveRecord::Base
         end
       end
     end
-    if collection_data[group_by_element].present?
-      header_length = collection_data[group_by_element].length
-    else
-      header_length = 0
-    end
+    header_length = 0
     return [collection_data, header_length]
   end
 
@@ -356,7 +361,7 @@ class Website < ActiveRecord::Base
       sheet = Website.return_worksheet(book, sheet_name)
       Website.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
     else
-      Website.group_by_sheet(page, webpage_element)
+      Website.group_by_sheet(page, webpage_element, respective_parameters)
     end
   end
 
@@ -371,12 +376,33 @@ class Website < ActiveRecord::Base
         break
       end
     end
+    sheet.change_row_bold(row = 0, bolded = true)
     table_rows.each_with_index do |tr_data, tr_index|
+      sheet.change_row_bold(row = tr_index+1, bolded = true)
+      # change rake task and change column names
+      sheet.change_row_fill(row = tr_index+1, font_color = '00bfff')
       tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
+        header_content_length = td_data.text.length
+        content_column_data = page.search(webpage_element.content_path + " "+ webpage_element.data_path+":nth-child(#{(td_index+1)})")
+        content_column_length = 0
+        if content_column_data.present?
+          content_column_length = content_column_data.map(&:text).map(&:length).max
+        end
+        if content_column_length > header_content_length && content_column_length > sheet.get_column_width(td_index)
+          sheet.change_column_width(td_index, content_column_length)
+        elsif header_content_length > content_column_length && header_content_length > sheet.get_column_width(td_index)
+          sheet.change_column_width(td_index, header_content_length)
+        end
         sheet.add_cell(tr_index + 1, td_index, td_data.text)
       end
     end
     return header_length
+  end
+
+  def self.testing
+    agent = Mechanize.new
+    page = agent.get("file:///home/surya/weather_forecast_information_system/aaa.html")
+    raise page.search("#DeviceData tr td:nth-child(2)").map(&:text).map(&:length).max.inspect
   end
 
   def self.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
@@ -405,6 +431,7 @@ class Website < ActiveRecord::Base
         sheet = book.add_worksheet(sheet_name)
       end
     end
+    sheet.merge_cells(0, 0, 0, 10)
     return sheet
   end
 
@@ -420,14 +447,18 @@ class Website < ActiveRecord::Base
       tr_data.search("td").each_with_index do |td_data, td_index|
         if td_data["rowspan"].present?
           (td_data["rowspan"].to_i - 1).times do |time|
-            table_rows[tr_index+ time +1].search("td")[td_index].before("<td></td>")
+            # temp fix check for permanet solution if no tr then what to do
+            if table_rows[tr_index+ time +1].present?
+              table_rows[tr_index+ time +1].search("td")[td_index].before("<td></td>")
+            end
           end
           td_data.remove_attribute("rowspan")
         end
         if td_data["colspan"].present?
           colspan_length = td_data["colspan"].to_i - 1
           (td_data["colspan"].to_i - 1).times do |time|
-            table_rows[tr_index].search("td")[td_index+ time].after("<td></td>")
+            colspan_data = "<td>#{td_data.text}</td>"
+            table_rows[tr_index].search("td")[td_index+ time].after(colspan_data)
           end
           td_data.remove_attribute("colspan")
           flag = true
