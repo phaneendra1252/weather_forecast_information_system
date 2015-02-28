@@ -107,8 +107,8 @@ ActiveRecord::Schema.define(version: 20150215173427) do
     t.string   "heading_path"
     t.string   "content_path"
     t.string   "data_path"
-    t.string   "header"
-    t.string   "merge_cells"
+    t.string   "header_path"
+    t.string   "folder_path"
     t.string   "file_name"
     t.string   "sheet_name"
     t.string   "group_by_element"
@@ -125,6 +125,7 @@ ActiveRecord::Schema.define(version: 20150215173427) do
 
   create_table "websites", force: true do |t|
     t.string   "name"
+    t.string   "folder_path"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

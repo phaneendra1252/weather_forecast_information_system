@@ -7,8 +7,10 @@ class Website < ActiveRecord::Base
   accepts_nested_attributes_for :visits, :allow_destroy => true
 
   def self.test
+    bucket = Website.s3_configuration
     websites = Website.all
     websites.each do |website|
+      Website.download_from_s3_and_unzip(website, bucket)
       website.website_urls.each do |website_url|
         respective_parameter_groups = RespectiveParameterGroup.includes(:website_url).where('website_url_id = ?', website_url.id)
         respective_parameters = RespectiveParameter.includes(:respective_parameter_group).where('respective_parameter_group_id IN (?)', respective_parameter_groups.map(&:id))
@@ -19,19 +21,59 @@ class Website < ActiveRecord::Base
           respective_parameter_groups.each do |respective_parameter_group|
             respective_parameters = RespectiveParameter.includes(:respective_parameter_group).where('respective_parameter_group_id = ?', respective_parameter_group.id)
             file_name = Website.add_file_names(website_url, respective_parameters, website_url.webpage_element.file_name)
-            file_name = Website.return_file_path(file_name, website_url.webpage_element, respective_parameters)
+            file_name = Website.return_file_path(file_name, website_url.webpage_element, respective_parameters, website)
             book = Website.return_workbook(file_name)
             respective_url = Website.replace_respective_parameter_values(url, respective_parameters)
-            Website.xls_generation(website_url, respective_parameters, respective_url, file_name, book, agent, nil)
+            Website.xls_generation(website_url, respective_parameters, respective_url, file_name, book, agent, nil, website)
           end
         else
           webpage_element = website_url.webpage_element
           file_name = Website.return_file_name(webpage_element)
-          file_name = Website.return_file_path(file_name, webpage_element, respective_parameters)
+          file_name = Website.return_file_path(file_name, webpage_element, respective_parameters, website)
           book = Website.return_workbook(file_name)
-          Website.xls_generation(website_url, nil, url, file_name, book, agent, webpage_element.group_by_element)
+          Website.xls_generation(website_url, nil, url, file_name, book, agent, webpage_element.group_by_element, website)
         end
       end
+      Website.zip_and_upload_on_s3(website, bucket)
+    end
+  end
+
+  def self.s3_configuration
+    require 'aws-sdk'
+    bucket_name = 'wfisn'
+    AWS.config(
+      :access_key_id => "AKIAJAGHF5MUHWTOMJJQ",
+      :secret_access_key => "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"
+    )
+    s3 = AWS::S3.new
+    bucket = s3.buckets[bucket_name]
+    unless bucket.exists?
+      bucket = s3.buckets.create(bucket_name)
+    end
+    return bucket
+  end
+
+  def self.zip_and_upload_on_s3(website, bucket)
+    path = Website.return_folder_path(website)
+    Website.zip(path, (path+".zip"), true)
+    source_file = path + ".zip"
+    key = source_file.split("tmp/").last
+    s3_file = bucket.objects[key].write(:file => source_file)
+    FileUtils.rm(source_file)
+  end
+
+  def self.download_from_s3_and_unzip(website, bucket)
+    path = Website.return_folder_path(website)
+    source_file = path + ".zip"
+    key = source_file.split("tmp/").last
+    object = bucket.objects[key]
+    if object.exists?
+      File.open(source_file, 'wb') do |file|
+        object.read do |chunk|
+          file.write(chunk)
+        end
+      end
+      Website.unzip(source_file, path, true)
     end
   end
 
@@ -46,25 +88,62 @@ class Website < ActiveRecord::Base
     end
   end
 
-  def self.return_file_path(file_name, webpage_element, respective_parameters)
-    file_path = Setting.find_by(key: "file_path")
-    if file_name.present?
-      file_name = file_name.titleize.gsub(" ", "-").gsub("/", "-")
-      if file_path.present?
-        file_path = file_path.value
+  def self.zip(dir, zip_dir, remove_after = false)
+    require 'rubygems'
+    require 'zip'
+    require 'find'
+    require 'fileutils'
+    Zip::File.open(zip_dir, Zip::File::CREATE)do |zipfile|
+      Find.find(dir) do |path|
+        Find.prune if File.basename(path)[0] == ?.
+        dest = /#{dir}\/(\w.*)/.match(path)
+        # Skip files if they exists
+        begin
+          zipfile.add(dest[1],path) if dest
+        rescue Zip::ZipEntryExistsError
+        end
       end
     end
-    merge_cells = webpage_element.merge_cells
-    if webpage_element.merge_cells.present?
-      #hard coded
-      merge_cells = merge_cells.gsub("year", (Date.today-1).strftime("%Y"))
-      merge_cells = merge_cells.gsub("month", (Date.today-1).strftime("%B"))
-      merge_cells = "/" + merge_cells unless merge_cells[0] == "/"
-      merge_cells_path = Website.replace_matched_data(webpage_element.website_url, respective_parameters, merge_cells)
-      file_path = file_path  + merge_cells_path if merge_cells_path.present?
-      FileUtils::mkdir_p(file_path)
+    FileUtils.rm_rf(dir) if remove_after
+  end
+
+  def self.unzip(zip, unzip_dir, remove_after = false)
+    require 'rubygems'
+    require 'zip'
+    require 'find'
+    require 'fileutils'
+    Zip::File.open(zip) do |zip_file|
+      zip_file.each do |f|
+        f_path=File.join(unzip_dir, f.name)
+        FileUtils.mkdir_p(File.dirname(f_path))
+        zip_file.extract(f, f_path) unless File.exist?(f_path)
+      end
     end
-    file_path = file_path + "/" + file_name+".xlsx"
+    FileUtils.rm(zip) if remove_after
+  end
+
+  def self.return_file_path(file_name, webpage_element, respective_parameters, website)
+    if file_name.present?
+      file_name = file_name.titleize.gsub(" ", "-").gsub("/", "-")
+    end
+    folder_path = Website.return_folder_path(website, webpage_element, respective_parameters)
+    FileUtils::mkdir_p(folder_path)
+    file_path = folder_path + "/" + file_name+".xlsx"
+  end
+
+  def self.return_folder_path(website, webpage_element = nil, respective_parameters = nil)
+    folder_path = website.folder_path
+    if folder_path.present?
+      #hard coded
+      folder_path = folder_path.gsub("year", (Date.today-1).strftime("%Y"))
+      folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
+      folder_path = "/" + folder_path unless folder_path[0] == "/"
+      folder_path = "#{Rails.root}/tmp" + folder_path
+      if webpage_element.present?
+        folder_path = Website.replace_matched_data(webpage_element.website_url, respective_parameters, folder_path)
+      end
+    end
+    return folder_path
   end
 
   def self.return_file_name(webpage_element)
@@ -290,8 +369,8 @@ class Website < ActiveRecord::Base
     sheet_name = CommonParameter.add_date(sheet_name)
   end
 
-  def self.group_by_sheet(page, webpage_element, respective_parameters)
-    header_data = page.search(webpage_element.header)
+  def self.group_by_sheet(page, webpage_element, respective_parameters, website)
+    header_data = page.search(webpage_element.header_path)
     data = page.search(webpage_element.content_path)
     group_by_element = webpage_element.group_by_element
     data_path = webpage_element.data_path
@@ -299,12 +378,12 @@ class Website < ActiveRecord::Base
     index = Website.find_index_of_column(header_data, data_path, group_by_element)
     generated_data = Website.generate_data_from_webpage(data, index, data_path, group_by_element, header_data)
     collection_data, header_length = generated_data[0], generated_data[1]
-    Website.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_data, respective_parameters)
+    Website.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_data, respective_parameters, website)
   end
 
-  def self.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_data, respective_parameters)
+  def self.create_excel_sheet_with_generated_data(collection_data, group_by_element, sheet_name, page, webpage_element, header_data, respective_parameters, website)
     collection_data.each do |k, v|
-      file_name = Website.return_file_path(k, webpage_element, respective_parameters)
+      file_name = Website.return_file_path(k, webpage_element, respective_parameters, website)
       book = Website.return_workbook(file_name)
       sheet = Website.return_worksheet(book, sheet_name)
       sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
@@ -353,7 +432,7 @@ class Website < ActiveRecord::Base
     return index
   end
 
-  def self.xls_generation(website_url, respective_parameters, url, file_name, book, agent, group_by_element)
+  def self.xls_generation(website_url, respective_parameters, url, file_name, book, agent, group_by_element, website)
     page = agent.get(url)
     webpage_element = website_url.webpage_element
     if group_by_element.blank?
@@ -361,12 +440,12 @@ class Website < ActiveRecord::Base
       sheet = Website.return_worksheet(book, sheet_name)
       Website.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
     else
-      Website.group_by_sheet(page, webpage_element, respective_parameters)
+      Website.group_by_sheet(page, webpage_element, respective_parameters, website)
     end
   end
 
   def self.generate_header(page, sheet, webpage_element)
-    table_rows = page.search(webpage_element.header)
+    table_rows = page.search(webpage_element.header_path)
     header_length = table_rows.length
     spans_count = Website.spans_count(table_rows)
     spans_count.times do |t|
@@ -415,7 +494,7 @@ class Website < ActiveRecord::Base
     header_length = Website.generate_header(page, sheet, webpage_element)
     page.search(webpage_element.content_path).each_with_index do |tr_data, tr_index|
       tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
-        sheet.add_cell(header_length + tr_index+1, td_index, td_data.text)
+        sheet.add_cell(header_length + tr_index+1, td_index, td_data.text.gsub("\302\240", ' ').gsub("\r\n", "").gsub("\t"," ").strip.squeeze)
       end
     end
     book.write file_name

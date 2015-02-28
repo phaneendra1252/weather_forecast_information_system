@@ -13,6 +13,9 @@
       .form-group
         = f.label :name, "Website Name"
         = f.text_field :name, :autofocus => true
+      .form-group
+        = f.label :folder_path, "Folder Path"
+        = f.text_field :folder_path, :autofocus => true
       = f.fields_for :visits do |builder|
         = render "visit_fields", :f => builder
       = link_to_add_fields "Add a Visit", f, :visits, "btn btn-primary", "Add a new Visit"

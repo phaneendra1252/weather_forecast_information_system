@@ -165,3 +165,24 @@ Weather Observations => Daily Observations
   #   end
   #   puts uniq_group_by_data.inspect
   # end
+
+
+    def self.yyyy
+    # require 'aws-sdk'
+    # bucket_name = 'wfis'
+    source_filename = 'a.zip'
+    # AWS.config(
+    #   :access_key_id => "AKIAJAGHF5MUHWTOMJJQ",
+    #   :secret_access_key => "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"
+    # )
+    # s3 = AWS::S3.new
+    # bucket = s3.buckets["wfis"]
+    folder_name = "2015/february"
+    key = folder_name.to_s + "/" + File.basename(source_filename)
+    s3_file = bucket.objects[key].write(:file => source_filename)
+    File.open('tmp/now.zip', 'wb') do |file|
+      bucket.objects[key].read do |chunk|
+        file.write(chunk)
+      end
+    end
+  end

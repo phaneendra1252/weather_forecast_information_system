@@ -55,6 +55,7 @@ class WebsitesController < ApplicationController
     def website_params
       params.require(:website).permit(
         :name,
+        :folder_path,
         :_destroy,
         visits_attributes: [
           :id,
@@ -99,8 +100,8 @@ class WebsitesController < ApplicationController
             :heading_path,
             :content_path,
             :data_path,
-            :header,
-            :merge_cells,
+            :header_path,
+            :folder_path,
             :file_name,
             :sheet_name,
             :group_by_element

@@ -5,8 +5,8 @@ class CreateWebpageElements < ActiveRecord::Migration
       t.string :heading_path
       t.string :content_path
       t.string :data_path
-      t.string :header
-      t.string :merge_cells
+      t.string :header_path
+      t.string :folder_path
       t.string :file_name
       t.string :sheet_name
       t.string :group_by_element
