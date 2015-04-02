@@ -3,4 +3,5 @@ class WebpageElement < ActiveRecord::Base
   # has_many :webpage_elements_website_urls
   belongs_to :website_url
   validates :content_path, presence: true
+  validates :content_loop_path, presence: true
 end

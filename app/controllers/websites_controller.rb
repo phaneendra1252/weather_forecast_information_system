@@ -99,6 +99,7 @@ class WebsitesController < ApplicationController
             :website_url_id,
             :heading_path,
             :content_path,
+            :content_loop_path,
             :data_path,
             :header_path,
             :folder_path,

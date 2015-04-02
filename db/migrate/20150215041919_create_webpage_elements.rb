@@ -4,6 +4,7 @@ class CreateWebpageElements < ActiveRecord::Migration
       t.integer :website_url_id
       t.string :heading_path
       t.string :content_path
+      t.string :content_loop_path
       t.string :data_path
       t.string :header_path
       t.string :folder_path

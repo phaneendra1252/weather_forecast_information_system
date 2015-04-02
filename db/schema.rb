@@ -106,6 +106,7 @@ ActiveRecord::Schema.define(version: 20150215173427) do
     t.integer  "website_url_id"
     t.string   "heading_path"
     t.string   "content_path"
+    t.string   "content_loop_path"
     t.string   "data_path"
     t.string   "header_path"
     t.string   "folder_path"

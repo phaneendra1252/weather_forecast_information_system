@@ -6,9 +6,9 @@ class Website < ActiveRecord::Base
   has_many :visits, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :visits, :allow_destroy => true
 
-  def self.test
+  def self.parse_wfis(website_id = nil)
     bucket = Website.s3_configuration
-    websites = Website.all
+    websites = website_id.present? ? Website.find(website_id) : Website.all
     websites.each do |website|
       Website.download_from_s3_and_unzip(website, bucket)
       website.website_urls.each do |website_url|
@@ -124,6 +124,7 @@ class Website < ActiveRecord::Base
 
   def self.return_file_path(file_name, webpage_element, respective_parameters, website)
     if file_name.present?
+      file_name = Website.add_file_names(webpage_element.website_url, respective_parameters, file_name)
       file_name = file_name.titleize.gsub(" ", "-").gsub("/", "-")
     end
     folder_path = Website.return_folder_path(website, webpage_element, respective_parameters)
@@ -370,8 +371,9 @@ class Website < ActiveRecord::Base
   end
 
   def self.group_by_sheet(page, webpage_element, respective_parameters, website)
-    header_data = page.search(webpage_element.header_path)
-    data = page.search(webpage_element.content_path)
+    table = page.search(webpage_element.content_path)
+    header_data = table.search(webpage_element.header_path)
+    data = table.search(webpage_element.content_loop_path)
     group_by_element = webpage_element.group_by_element
     data_path = webpage_element.data_path
     sheet_name = webpage_element.sheet_name
@@ -386,7 +388,8 @@ class Website < ActiveRecord::Base
       file_name = Website.return_file_path(k, webpage_element, respective_parameters, website)
       book = Website.return_workbook(file_name)
       sheet = Website.return_worksheet(book, sheet_name)
-      sheet.add_cell(0, 0, page.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+      table = page.search(webpage_element.content_path)
+      sheet.add_cell(0, 0, table.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
       header_length = Website.generate_header(page, sheet, webpage_element)
       v.each_with_index do |row, tr_index|
         row.each_with_index do |td_data, td_index|
@@ -421,7 +424,8 @@ class Website < ActiveRecord::Base
     data.each do |trs|
       if index.blank?
         trs.search(data_path).each_with_index do |td, i|
-          if index.blank? && td.text.strip == group_by_element
+          data = Website.strip_data(td.text)
+          if index.blank? && data == group_by_element
             index = i
             break
           end
@@ -445,7 +449,8 @@ class Website < ActiveRecord::Base
   end
 
   def self.generate_header(page, sheet, webpage_element)
-    table_rows = page.search(webpage_element.header_path)
+    table = page.search(webpage_element.content_path)
+    table_rows = table.search(webpage_element.header_path)
     header_length = table_rows.length
     spans_count = Website.spans_count(table_rows)
     spans_count.times do |t|
@@ -462,7 +467,7 @@ class Website < ActiveRecord::Base
       sheet.change_row_fill(row = tr_index+1, font_color = '00bfff')
       tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
         header_content_length = td_data.text.length
-        content_column_data = page.search(webpage_element.content_path + " "+ webpage_element.data_path+":nth-child(#{(td_index+1)})")
+        content_column_data = page.search(webpage_element.content_path).search(webpage_element.content_loop_path).search(webpage_element.data_path+":nth-child(#{(td_index+1)})")
         content_column_length = 0
         if content_column_data.present?
           content_column_length = content_column_data.map(&:text).map(&:length).max
@@ -472,29 +477,36 @@ class Website < ActiveRecord::Base
         elsif header_content_length > content_column_length && header_content_length > sheet.get_column_width(td_index)
           sheet.change_column_width(td_index, header_content_length)
         end
-        sheet.add_cell(tr_index + 1, td_index, td_data.text)
+        data = Website.strip_data(td_data.text)
+        sheet.add_cell(tr_index + 1, td_index, data)
       end
     end
     return header_length
   end
 
+  def self.strip_data(data)
+    return data.gsub("\302\240", ' ').gsub("\r\n", "").gsub("\t"," ").strip.squeeze(' ')
+  end
+
   def self.testing
     agent = Mechanize.new
-    page = agent.get("file:///home/surya/weather_forecast_information_system/aaa.html")
+    page = agent.get("file:///home/surya/weather_forecast_information_system/dwr.doc")
     raise page.search("#DeviceData tr td:nth-child(2)").map(&:text).map(&:length).max.inspect
   end
 
   def self.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
     heading = ""
+    table = page.search(webpage_element.content_path)
     if webpage_element.heading_path.present?
-      heading = page.at(webpage_element.heading_path).text
-      heading = heading.gsub("\302\240", ' ').gsub("\r\n", "").gsub("\t"," ").strip.squeeze
+      heading = table.search(webpage_element.heading_path).text
+      heading = Website.strip_data(heading)
     end
     sheet.add_cell(0, 0, heading)
     header_length = Website.generate_header(page, sheet, webpage_element)
-    page.search(webpage_element.content_path).each_with_index do |tr_data, tr_index|
+    table.search(webpage_element.content_loop_path).each_with_index do |tr_data, tr_index|
       tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
-        sheet.add_cell(header_length + tr_index+1, td_index, td_data.text.gsub("\302\240", ' ').gsub("\r\n", "").gsub("\t"," ").strip.squeeze)
+        data = Website.strip_data(td_data.text)
+        sheet.add_cell(header_length + tr_index+1, td_index, data)
       end
     end
     book.write file_name
