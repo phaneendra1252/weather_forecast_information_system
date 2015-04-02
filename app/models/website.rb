@@ -140,6 +140,14 @@ class Website < ActiveRecord::Base
       folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
       folder_path = "/" + folder_path unless folder_path[0] == "/"
       folder_path = "#{Rails.root}/tmp" + folder_path
+      webpage_element_folder_path = webpage_element.folder_path
+      if webpage_element_folder_path.present?
+        if webpage_element_folder_path[0] == "/"
+          folder_path = folder_path + webpage_element_folder_path
+        else
+          folder_path = folder_path + "/" + webpage_element_folder_path
+        end
+      end
       if webpage_element.present?
         folder_path = Website.replace_matched_data(webpage_element.website_url, respective_parameters, folder_path)
       end
@@ -388,8 +396,7 @@ class Website < ActiveRecord::Base
       file_name = Website.return_file_path(k, webpage_element, respective_parameters, website)
       book = Website.return_workbook(file_name)
       sheet = Website.return_worksheet(book, sheet_name)
-      table = page.search(webpage_element.content_path)
-      sheet.add_cell(0, 0, table.at(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+      sheet.add_cell(0, 0, page.search(webpage_element.heading_path).text) if webpage_element.heading_path.present?
       header_length = Website.generate_header(page, sheet, webpage_element)
       v.each_with_index do |row, tr_index|
         row.each_with_index do |td_data, td_index|
@@ -498,7 +505,7 @@ class Website < ActiveRecord::Base
     heading = ""
     table = page.search(webpage_element.content_path)
     if webpage_element.heading_path.present?
-      heading = table.search(webpage_element.heading_path).text
+      heading = page.search(webpage_element.heading_path).text
       heading = Website.strip_data(heading)
     end
     sheet.add_cell(0, 0, heading)
