@@ -43,6 +43,11 @@ GEM
       coffee-script-source
       execjs
     coffee-script-source (1.9.1)
+    delayed_job (4.0.6)
+      activesupport (>= 3.0, < 5.0)
+    delayed_job_active_record (4.0.3)
+      activerecord (>= 3.0, < 5.0)
+      delayed_job (>= 3.0, < 4.1)
     devise (3.4.1)
       bcrypt (~> 3.0)
       orm_adapter (~> 0.1)
@@ -53,6 +58,9 @@ GEM
     domain_name (0.5.23)
       unf (>= 0.0.5, < 1.0.0)
     erubis (2.7.0)
+    exception_notification (4.1.0)
+      actionmailer (>= 3.0.4)
+      activesupport (>= 3.0.4)
     execjs (2.3.0)
     haml (4.0.6)
       tilt
@@ -161,7 +169,9 @@ DEPENDENCIES
   aws-sdk (< 2)
   cancan
   coffee-rails (~> 4.0.0)
+  delayed_job_active_record
   devise
+  exception_notification
   haml
   jbuilder (~> 2.0)
   jquery-rails

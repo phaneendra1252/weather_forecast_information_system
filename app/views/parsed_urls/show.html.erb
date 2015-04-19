@@ -1,0 +1,24 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Date:</strong>
+  <%= @parsed_url.date %>
+</p>
+
+<p>
+  <strong>Website name:</strong>
+  <%= @parsed_url.website_id %>
+</p>
+
+<p>
+  <strong>String:</strong>
+  <%= @parsed_url.string %>
+</p>
+
+<p>
+  <strong>Url:</strong>
+  <%= @parsed_url.url %>
+</p>
+
+<%= link_to 'Edit', edit_parsed_url_path(@parsed_url) %> |
+<%= link_to 'Back', parsed_urls_path %>

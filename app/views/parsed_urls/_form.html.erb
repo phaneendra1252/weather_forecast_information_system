@@ -1,0 +1,33 @@
+<%= form_for(@parsed_url) do |f| %>
+  <% if @parsed_url.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@parsed_url.errors.count, "error") %> prohibited this parsed_url from being saved:</h2>
+
+      <ul>
+      <% @parsed_url.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :date %><br>
+    <%= f.date_select :date %>
+  </div>
+  <div class="field">
+    <%= f.label :website_id %><br>
+    <%= f.text_field :website_id %>
+  </div>
+  <div class="field">
+    <%= f.label :string %><br>
+    <%= f.text_field :string %>
+  </div>
+  <div class="field">
+    <%= f.label :url %><br>
+    <%= f.text_field :url %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

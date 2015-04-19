@@ -1,6 +1,13 @@
 Rails.application.routes.draw do
+  resources :parsed_urls do
+    get "parsed_urls/download"
+  end
   resources :settings
-  resources :websites
+  resources :websites do
+    collection do
+      post :parse_websites
+    end
+  end
   devise_for :users, controllers: {registrations: "users/registrations", sessions: "sessions"}
   resources :roles
   resources :users, only: [:index, :edit, :new, :create, :update, :destroy]

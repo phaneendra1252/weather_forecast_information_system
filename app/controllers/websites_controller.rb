@@ -37,6 +37,13 @@ class WebsitesController < ApplicationController
     respond_with(@website)
   end
 
+  def parse_websites
+    if params[:websites].present?
+      Website.delay.parse_wfis(params[:websites].map(&:to_i).compact)
+      redirect_to websites_url, :notice => "Parsed data successfully"
+    end
+  end
+
   private
     def set_website
       @website = Website.find(params[:id])

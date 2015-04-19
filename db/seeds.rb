@@ -9,16 +9,17 @@
 admin_role = Role.where(name: "admin").first_or_create
 moderator_role = Role.where(name: "moderator").first_or_create
 
-if User.where(email: "ganni.phaneendra@gmail.com").blank?
-	user = User.new(name: "Surya", email: "ganni.phaneendra@gmail.com", password: "testing123", password_confirmation: "testing123")
+if User.where(email: ENV['USER_EMAIL']).blank?
+	user = User.new(name: "Surya", email: ENV['USER_EMAIL'], password: "testing123", password_confirmation: "testing123")
 	user.role_ids = [admin_role.id, moderator_role.id]
 	user.save
 end
 
-setting = Setting.where(key: "file_path").first_or_initialize
-setting.value = "/home/surya/project_files/wfis"
+setting = Setting.where(key: "report_mail_id", value: ENV['USER_EMAIL']).first_or_initialize
 setting.save
 
+setting = Setting.where(key: "report_mail_id", value: ENV['ALTERNATIVE_USER_EMAIL']).first_or_initialize
+setting.save
 # # apsdps start
 
 # website = Website.where(name: "apsdps").first_or_initialize

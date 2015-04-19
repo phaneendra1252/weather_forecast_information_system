@@ -3,14 +3,24 @@ class Website < ActiveRecord::Base
   accepts_nested_attributes_for :website_urls, :allow_destroy => true
   validates :name, presence: true
 
+  attr_accessor :parsed_websites
+
   has_many :visits, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :visits, :allow_destroy => true
+
+  has_many :parsed_urls
+
+  def report_mail_ids
+    Setting.where(key: "report_mail_id").map(&:value)
+  end
 
   def self.parse_wfis(website_id = nil)
     bucket = Website.s3_configuration
     websites = website_id.present? ? Website.find(website_id) : Website.all
+    notifications = {}
     websites.each do |website|
       Website.download_from_s3_and_unzip(website, bucket)
+      file_name = ""
       website.website_urls.each do |website_url|
         respective_parameter_groups = RespectiveParameterGroup.includes(:website_url).where('website_url_id = ?', website_url.id)
         respective_parameters = RespectiveParameter.includes(:respective_parameter_group).where('respective_parameter_group_id IN (?)', respective_parameter_groups.map(&:id))
@@ -35,15 +45,35 @@ class Website < ActiveRecord::Base
         end
       end
       Website.zip_and_upload_on_s3(website, bucket)
+    #   #hard coded
+      bucket_url = "https://s3.amazonaws.com/wfisystem/"
+      download_url_path = file_name.gsub("#{Rails.root}/tmp/", "")
+      if download_url_path.index("xlsx")
+        xlsx_file = download_url_path.split("/")[-1]
+        download_url_path = download_url_path.gsub("/#{xlsx_file}", "") + ".zip"
+        download_url_path = bucket_url + download_url_path
+      end
+      notifications.merge!({ website.name => download_url_path })
     end
+    @website = Website.new
+    notifications.each do |website_name, url|
+      website = Website.where(name: website_name).first
+      parsed_url = ParsedUrl.find_or_initialize_by(url: url)
+      parsed_url.date = Date.today - 1
+      parsed_url.website_id = website.id
+      parsed_url.save
+      @website.parsed_websites ||= []
+      @website.parsed_websites << website_name
+    end
+    WebsiteMailer.send_notification(@website).deliver
   end
 
   def self.s3_configuration
     require 'aws-sdk'
-    bucket_name = 'wfisn'
+    bucket_name = 'wfisystem'
     AWS.config(
-      :access_key_id => "AKIAJAGHF5MUHWTOMJJQ",
-      :secret_access_key => "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"
+      :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
+      :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
     )
     s3 = AWS::S3.new
     bucket = s3.buckets[bucket_name]
@@ -54,12 +84,17 @@ class Website < ActiveRecord::Base
   end
 
   def self.zip_and_upload_on_s3(website, bucket)
+    source_file_path = Website.zip_file(website)
+    key = source_file_path.split("tmp/").last
+    s3_file = bucket.objects[key].write(:file => source_file_path)
+    FileUtils.rm(source_file_path)
+  end
+
+  def self.zip_file(website)
     path = Website.return_folder_path(website)
-    Website.zip(path, (path+".zip"), true)
-    source_file = path + ".zip"
-    key = source_file.split("tmp/").last
-    s3_file = bucket.objects[key].write(:file => source_file)
-    FileUtils.rm(source_file)
+    source_file_path = path + ".zip"
+    Website.zip(path, source_file_path, true)
+    return source_file_path
   end
 
   def self.download_from_s3_and_unzip(website, bucket)
@@ -68,6 +103,8 @@ class Website < ActiveRecord::Base
     key = source_file.split("tmp/").last
     object = bucket.objects[key]
     if object.exists?
+      folder_path = path.split("/")[0..-2].join("/")
+      FileUtils.mkdir_p(folder_path)
       File.open(source_file, 'wb') do |file|
         object.read do |chunk|
           file.write(chunk)
@@ -140,7 +177,7 @@ class Website < ActiveRecord::Base
       folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
       folder_path = "/" + folder_path unless folder_path[0] == "/"
       folder_path = "#{Rails.root}/tmp" + folder_path
-      webpage_element_folder_path = webpage_element.folder_path
+      webpage_element_folder_path = webpage_element.folder_path if webpage_element.present?
       if webpage_element_folder_path.present?
         if webpage_element_folder_path[0] == "/"
           folder_path = folder_path + webpage_element_folder_path
@@ -402,6 +439,17 @@ class Website < ActiveRecord::Base
         row.each_with_index do |td_data, td_index|
           sheet.add_cell(tr_index+1+header_length, td_index, td_data.text)
         end
+        # location_key = "Location"
+        # data_path = webpage_element.data_path
+        # location_index = Website.find_index_of_column(header_data, data_path, location_key)
+        # last_tr_index = 0
+        # last_td_index = 0
+        # row.each_with_index do |td_data, td_index|
+        #   sheet.add_cell(tr_index+1+header_length, td_index, td_data.text)
+        #   last_tr_index = tr_index+1+header_length
+        #   last_td_index = td_index
+        # end
+        # sheet.add_cell(last_tr_index, last_td_index+1, row[location_index].text + "123")
       end
       book.write file_name
     end
@@ -526,9 +574,15 @@ class Website < ActiveRecord::Base
       sheet_name = sheet_name.gsub("/", "-")
       sheet = book[sheet_name]
       if sheet.blank?
-        sheet = book.add_worksheet(sheet_name)
+        sheet = book["Sheet1"]
+        if sheet.present?
+          sheet.sheet_name = sheet_name
+        else
+          sheet = book.add_worksheet(sheet_name)
+        end
       end
     end
+    sheet.cols.clear
     sheet.merge_cells(0, 0, 0, 10)
     return sheet
   end

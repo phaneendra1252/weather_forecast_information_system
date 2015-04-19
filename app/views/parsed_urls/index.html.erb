@@ -1,0 +1,31 @@
+<h1>Listing parsed_urls</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Website name</th>
+      <th>Url</th>
+      <th colspan="2"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @parsed_urls.each do |parsed_url| %>
+      <tr>
+        <td><%= parsed_url.date %></td>
+        <td><%= parsed_url.website.name %></td>
+        <td><%= parsed_url.url %></td>
+        <td><%= link_to 'Show', parsed_url %></td>
+        <td><%= link_to 'Edit', edit_parsed_url_path(parsed_url) %></td>
+        <td><%= link_to 'Destroy', parsed_url, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+        <td><%= link_to 'Download', parsed_url_parsed_urls_download_path(parsed_url.id) %></td>
+
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Parsed url', new_parsed_url_path %>
