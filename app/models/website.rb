@@ -14,6 +14,10 @@ class Website < ActiveRecord::Base
     Setting.where(key: "report_mail_id").map(&:value)
   end
 
+  def reports
+    Report.all
+  end
+
   def self.parse_wfis(website_id = nil)
     bucket = Website.s3_configuration
     websites = website_id.present? ? Website.find(website_id) : Website.all
@@ -21,6 +25,7 @@ class Website < ActiveRecord::Base
     websites.each do |website|
       Website.download_from_s3_and_unzip(website, bucket)
       file_name = ""
+      website_name = website.name
       website.website_urls.each do |website_url|
         respective_parameter_groups = RespectiveParameterGroup.includes(:website_url).where('website_url_id = ?', website_url.id)
         respective_parameters = RespectiveParameter.includes(:respective_parameter_group).where('respective_parameter_group_id IN (?)', respective_parameter_groups.map(&:id))
@@ -173,10 +178,11 @@ class Website < ActiveRecord::Base
     folder_path = website.folder_path
     if folder_path.present?
       #hard coded
-      folder_path = folder_path.gsub("year", (Date.today-1).strftime("%Y"))
-      folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
-      folder_path = "/" + folder_path unless folder_path[0] == "/"
-      folder_path = "#{Rails.root}/tmp" + folder_path
+      # folder_path = folder_path.gsub("year", (Date.today-1).strftime("%Y"))
+      # folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
+      # folder_path = "/" + folder_path unless folder_path[0] == "/"
+      # folder_path = "#{Rails.root}/tmp" + folder_path
+      folder_path = Website.folder_path(folder_path)
       webpage_element_folder_path = webpage_element.folder_path if webpage_element.present?
       if webpage_element_folder_path.present?
         if webpage_element_folder_path[0] == "/"
@@ -189,6 +195,14 @@ class Website < ActiveRecord::Base
         folder_path = Website.replace_matched_data(webpage_element.website_url, respective_parameters, folder_path)
       end
     end
+    return folder_path
+  end
+
+  def self.folder_path(folder_path)
+    folder_path = folder_path.gsub("year", (Date.today-1).strftime("%Y"))
+    folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
+    folder_path = "/" + folder_path unless folder_path[0] == "/"
+    folder_path = "#{Rails.root}/tmp" + folder_path
     return folder_path
   end
 
@@ -415,7 +429,7 @@ class Website < ActiveRecord::Base
     sheet_name = CommonParameter.add_date(sheet_name)
   end
 
-  def self.group_by_sheet(page, webpage_element, respective_parameters, website)
+  def self.group_by_sheet(page, webpage_element, respective_parameters, website, website_url)
     table = page.search(webpage_element.content_path)
     header_data = table.search(webpage_element.header_path)
     data = table.search(webpage_element.content_loop_path)
@@ -439,19 +453,10 @@ class Website < ActiveRecord::Base
         row.each_with_index do |td_data, td_index|
           sheet.add_cell(tr_index+1+header_length, td_index, td_data.text)
         end
-        # location_key = "Location"
-        # data_path = webpage_element.data_path
-        # location_index = Website.find_index_of_column(header_data, data_path, location_key)
-        # last_tr_index = 0
-        # last_td_index = 0
-        # row.each_with_index do |td_data, td_index|
-        #   sheet.add_cell(tr_index+1+header_length, td_index, td_data.text)
-        #   last_tr_index = tr_index+1+header_length
-        #   last_td_index = td_index
-        # end
-        # sheet.add_cell(last_tr_index, last_td_index+1, row[location_index].text + "123")
       end
       book.write file_name
+      # pending
+      Website.generate_report(website, sheet, file_name)
     end
   end
 
@@ -497,9 +502,9 @@ class Website < ActiveRecord::Base
     if group_by_element.blank?
       sheet_name = Website.add_file_names(website_url, respective_parameters, webpage_element.sheet_name)
       sheet = Website.return_worksheet(book, sheet_name)
-      Website.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
+      Website.add_data_to_sheet(book, page, sheet, webpage_element, file_name, website, website_url)
     else
-      Website.group_by_sheet(page, webpage_element, respective_parameters, website)
+      Website.group_by_sheet(page, webpage_element, respective_parameters, website, website_url)
     end
   end
 
@@ -549,7 +554,87 @@ class Website < ActiveRecord::Base
     raise page.search("#DeviceData tr td:nth-child(2)").map(&:text).map(&:length).max.inspect
   end
 
-  def self.add_data_to_sheet(book, page, sheet, webpage_element, file_name)
+  def self.generate_report(website, sheet, file_name)
+    extract_data = sheet.extract_data
+    website_name = website.name
+    column_length = extract_data.compact.map(&:length).max
+    row_length = extract_data.length
+    date = Date.today - 1
+    file_name = file_name.gsub("#{Rails.root}/tmp/", "")
+    report = Report.find_by(file_name: file_name)
+    if report.blank?
+      Report.create(
+        website_name: website_name,
+        file_name: file_name,
+        yesterday_date: (date -1),
+        today_date: date,
+        yesterday_row_count: 0,
+        today_row_count: row_length,
+        row_count_difference: (row_length - 0),
+        yesterday_column_count: 0,
+        today_column_count: column_length,
+        column_count_difference: (column_length - 0)
+      )
+    else
+      # binding.pry
+      if report.today_date != date
+        report.yesterday_date = report.today_date
+        report.yesterday_row_count = report.today_row_count
+        report.yesterday_column_count = report.today_column_count
+      end
+      report.today_date = date
+      report.today_row_count = row_length
+      report.row_count_difference = (report.today_row_count - report.yesterday_row_count)
+      report.today_column_count = column_length
+      report.column_count_difference = (report.today_column_count - report.yesterday_column_count)
+      report.save!
+    end
+    Website.add_data_to_report_sheet(website)
+  end
+
+  def self.add_data_to_report_sheet(website)
+    folder_path = Website.return_folder_path(website)
+    # folder_path = "/year/month"
+    # folder_path = Website.folder_path(folder_path)
+    website_name = website.name
+    file_name = folder_path + "/" + "1_#{website_name}_report.xlsx"
+    book = Website.return_workbook(file_name)
+    sheet = Website.return_worksheet(book, (Date.today-1).to_s)
+    sheet.add_cell(0, 0, "Weather Forecasting report")
+    sheet.change_row_fill(row = 1, font_color = '00bfff')
+    columns = [
+                "website_name", "file_name", "yesterday_date", "today_date", "yesterday_row_count",
+                "today_row_count", "row_count_difference", "yesterday_column_count", "today_column_count",
+                "column_count_difference"
+              ]
+    header = columns.map(&:humanize)
+    header.each_with_index do |h, i|
+      sheet.add_cell(1, i, h)
+      if h == "file_name".humanize
+        sheet.change_column_width(i, 30)
+      else
+        sheet.change_column_width(i, h.length)
+      end
+    end
+    reports = Report.where(website_name: website_name)
+    reports.each_with_index do |report, index|
+      columns.each_with_index do |column, column_index|
+        if column == "file_name"
+          cell = sheet.add_cell(index+2, column_index, report[column].split("/").last)
+        else
+          cell =sheet.add_cell(index+2, column_index, report[column])
+        end
+        if ["row_count_difference", "column_count_difference"].include?(column)
+          if report[column] < 0
+            cell.change_fill("ff0000")
+          end
+        end
+      end
+    end
+    book.write file_name
+  end
+
+  def self.add_data_to_sheet(book, page, sheet, webpage_element, file_name, website, website_url)
     heading = ""
     table = page.search(webpage_element.content_path)
     if webpage_element.heading_path.present?
@@ -565,6 +650,7 @@ class Website < ActiveRecord::Base
       end
     end
     book.write file_name
+    Website.generate_report(website, sheet, file_name)
   end
 
   def self.return_worksheet(book, sheet_name)
@@ -582,7 +668,7 @@ class Website < ActiveRecord::Base
         end
       end
     end
-    sheet.cols.clear
+    sheet.delete_column
     sheet.merge_cells(0, 0, 0, 10)
     return sheet
   end

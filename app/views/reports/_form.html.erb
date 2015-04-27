@@ -1,0 +1,53 @@
+<%= form_for(@report) do |f| %>
+  <% if @report.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@report.errors.count, "error") %> prohibited this report from being saved:</h2>
+
+      <ul>
+      <% @report.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :file_name %><br>
+    <%= f.text_field :file_name %>
+  </div>
+  <div class="field">
+    <%= f.label :yesterday_date %><br>
+    <%= f.date_select :yesterday_date %>
+  </div>
+  <div class="field">
+    <%= f.label :today_date %><br>
+    <%= f.date_select :today_date %>
+  </div>
+  <div class="field">
+    <%= f.label :yesterday_row_count %><br>
+    <%= f.number_field :yesterday_row_count %>
+  </div>
+  <div class="field">
+    <%= f.label :today_row_count %><br>
+    <%= f.number_field :today_row_count %>
+  </div>
+  <div class="field">
+    <%= f.label :row_count_difference %><br>
+    <%= f.number_field :row_count_difference %>
+  </div>
+  <div class="field">
+    <%= f.label :yesterday_column_count %><br>
+    <%= f.number_field :yesterday_column_count %>
+  </div>
+  <div class="field">
+    <%= f.label :today_column_count %><br>
+    <%= f.number_field :today_column_count %>
+  </div>
+  <div class="field">
+    <%= f.label :column_count_difference %><br>
+    <%= f.number_field :column_count_difference %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

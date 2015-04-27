@@ -3,6 +3,7 @@ class WebsiteMailer < ActionMailer::Base
 
   def send_notification(website)
     @website = website
+    @reports = website.reports
     mail(:to => website.report_mail_ids, :subject => "Sucessfully parsed data")
   end
 

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150403040452) do
+ActiveRecord::Schema.define(version: 20150421023347) do
 
   create_table "common_parameters", force: true do |t|
     t.integer  "website_url_id"
@@ -43,6 +43,21 @@ ActiveRecord::Schema.define(version: 20150403040452) do
     t.integer  "website_id"
     t.string   "string"
     t.string   "url"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "reports", force: true do |t|
+    t.string   "website_name"
+    t.string   "file_name"
+    t.date     "yesterday_date"
+    t.date     "today_date"
+    t.integer  "yesterday_row_count"
+    t.integer  "today_row_count"
+    t.integer  "row_count_difference"
+    t.integer  "yesterday_column_count"
+    t.integer  "today_column_count"
+    t.integer  "column_count_difference"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

@@ -1,7 +1,4 @@
-<p>
-  Successfully parsed websites you can download by going to our application.Parsed websites are
-  <%= @website.parsed_websites.join(", ") %>
-</p>
+<h1>Listing reports</h1>
 
 <table>
   <thead>
@@ -15,8 +12,10 @@
       <th>Yesterday column count</th>
       <th>Today column count</th>
       <th>Column count difference</th>
+      <th colspan="3"></th>
     </tr>
   </thead>
+
   <tbody>
     <% @reports.each do |report| %>
       <tr>
@@ -26,18 +25,25 @@
         <td><%= report.yesterday_row_count %></td>
         <td><%= report.today_row_count %></td>
         <% if report.row_count_difference < 0 %>
-          <td style="color:red;"><%= report.row_count_difference %></td>
+          <td style="color: red;"><%= report.row_count_difference %></td>
         <% else %>
           <td><%= report.row_count_difference %></td>
         <% end %>
         <td><%= report.yesterday_column_count %></td>
         <td><%= report.today_column_count %></td>
         <% if report.column_count_difference < 0 %>
-          <td style="color:red;"><%= report.column_count_difference %></td>
+          <td style="color: red;"><%= report.column_count_difference %></td>
         <% else %>
           <td><%= report.column_count_difference %></td>
         <% end %>
+        <td><%= link_to 'Show', report %></td>
+        <td><%= link_to 'Edit', edit_report_path(report) %></td>
+        <td><%= link_to 'Destroy', report, method: :delete, data: { confirm: 'Are you sure?' } %></td>
       </tr>
     <% end %>
   </tbody>
 </table>
+
+<br>
+
+<%= link_to 'New Report', new_report_path %>

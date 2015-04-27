@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :reports
+
   resources :parsed_urls do
     get "parsed_urls/download"
   end
