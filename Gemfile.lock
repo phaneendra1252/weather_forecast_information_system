@@ -99,6 +99,7 @@ GEM
       mini_portile (~> 0.6.0)
     ntlm-http (0.1.1)
     orm_adapter (0.5.0)
+    pg (0.18.1)
     rack (1.5.2)
     rack-test (0.6.3)
       rack (>= 1.0)
@@ -178,6 +179,7 @@ DEPENDENCIES
   kaminari
   mechanize
   nokogiri
+  pg
   rails (= 4.1.7)
   rubyXL
   rubyzip
