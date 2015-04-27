@@ -35,6 +35,10 @@ gem 'aws-sdk', '< 2'
 gem 'rubyzip'
 gem 'delayed_job_active_record'
 gem 'exception_notification'
+group :production do
+  gem 'pg'
+  gem 'rails_12factor'
+end
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
