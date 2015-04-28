@@ -20,6 +20,25 @@ setting.save
 
 setting = Setting.where(key: "report_mail_id", value: ENV['ALTERNATIVE_USER_EMAIL']).first_or_initialize
 setting.save
+
+website = Website.where(name: "apsdps").first_or_initialize
+website.folder_path = "/year/month/apsdps"
+website.save
+
+website_url = WebsiteUrl.where(website_id: website.id, url: "file:///home/surya/1/Pictures/before_heroku/not_working_2%20times/weather_forecast_information_system/ap.html").first_or_create
+
+webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+webpage_element.heading_path = "#dp_content_map1 table tr td:first"
+webpage_element.content_path = "#dp_content_temp table"
+webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
+webpage_element.data_path = "td"
+webpage_element.header_path = "tr[1], tr[2]"
+webpage_element.folder_path = "/ap_soil_moisture"
+webpage_element.file_name = ""
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+webpage_element.group_by_element = "District"
+webpage_element.save
+
 # # apsdps start
 
 # website = Website.where(name: "apsdps").first_or_initialize
@@ -200,7 +219,7 @@ setting.save
 
 # #daily report end
 
-## imd_gov_in start
+# # imd_gov_in start
 
 # website = Website.where(name: "imd_gov_in").first_or_initialize
 # website.folder_path = "/year/month/imd_gov_in"
@@ -245,7 +264,7 @@ setting.save
 # webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 # webpage_element.save
 
-## imd_gov_in end
+# # imd_gov_in end
 
 # # Imdaws data start
 # website = Website.where(name: "imd_aws").first_or_initialize
