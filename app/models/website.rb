@@ -3,7 +3,7 @@ class Website < ActiveRecord::Base
   accepts_nested_attributes_for :website_urls, :allow_destroy => true
   validates :name, presence: true
 
-  attr_accessor :parsed_websites
+  attr_accessor :parsed_websites, :attachments
 
   has_many :visits, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :visits, :allow_destroy => true
@@ -22,6 +22,7 @@ class Website < ActiveRecord::Base
     bucket = Website.s3_configuration
     websites = website_id.present? ? Website.find(website_id) : Website.all
     notifications = {}
+    attachments = []
     websites.each do |website|
       Website.download_from_s3_and_unzip(website, bucket)
       file_name = ""
@@ -59,8 +60,10 @@ class Website < ActiveRecord::Base
         download_url_path = bucket_url + download_url_path
       end
       notifications.merge!({ website.name => download_url_path })
+      attachments << Website.return_folder_path(website) + ".zip"
     end
     @website = Website.new
+    @website.attachments = attachments
     notifications.each do |website_name, url|
       website = Website.where(name: website_name).first
       parsed_url = ParsedUrl.find_or_initialize_by(url: url)
@@ -71,6 +74,9 @@ class Website < ActiveRecord::Base
       @website.parsed_websites << website_name
     end
     WebsiteMailer.send_notification(@website).deliver
+    attachments.each do |attachment|
+      FileUtils.rm(attachment)
+    end
   end
 
   def self.s3_configuration
@@ -92,7 +98,6 @@ class Website < ActiveRecord::Base
     source_file_path = Website.zip_file(website)
     key = source_file_path.split("tmp/").last
     s3_file = bucket.objects[key].write(:file => source_file_path)
-    FileUtils.rm(source_file_path)
   end
 
   def self.zip_file(website)

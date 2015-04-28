@@ -37,7 +37,7 @@ gem 'delayed_job_active_record'
 gem 'exception_notification'
 group :production do
   gem 'pg'
-  # gem 'rails_12factor'
+  gem 'rails_12factor'
 end
 group :development do
   gem 'sqlite3'
