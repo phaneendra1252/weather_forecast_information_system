@@ -77,6 +77,7 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = false
 
   config.action_mailer.default_url_options = { host: 'immense-plateau-3139.herokuapp.com' }
   config.action_mailer.delivery_method = :smtp
@@ -88,8 +89,7 @@ Rails.application.configure do
     :user_name => ENV['USER_EMAIL'],
     :password => ENV['EMAIL_PASSWORD'],
     :authentication => 'plain',
-    :enable_starttls_auto => true,
-    :openssl_verify_mode  => 'none'
+    :enable_starttls_auto => true
   }
   Rails.application.config.middleware.use ExceptionNotification::Rack,
     :email => {
@@ -97,6 +97,4 @@ Rails.application.configure do
       :sender_address => ENV['USER_EMAIL'],
       :exception_recipients => [ENV['USER_EMAIL']]
     }
-  config.action_mailer.raise_delivery_errors = true
-
 end
