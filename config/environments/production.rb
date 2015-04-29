@@ -97,4 +97,6 @@ Rails.application.configure do
       :sender_address => ENV['USER_EMAIL'],
       :exception_recipients => [ENV['USER_EMAIL']]
     }
+  config.action_mailer.raise_delivery_errors = true
+
 end
