@@ -73,7 +73,7 @@ class Website < ActiveRecord::Base
       @website.parsed_websites ||= []
       @website.parsed_websites << website_name
     end
-    WebsiteMailer.send_notification(@website).deliver
+    # WebsiteMailer.send_notification(@website).deliver
     attachments.each do |attachment|
       FileUtils.rm(attachment)
     end
