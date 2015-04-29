@@ -25,7 +25,7 @@ website = Website.where(name: "apsdps").first_or_initialize
 website.folder_path = "/year/month/apsdps"
 website.save
 
-website_url = WebsiteUrl.where(website_id: website.id, url: "file:///home/surya/1/Pictures/before_heroku/not_working_2%20times/weather_forecast_information_system/ap.html").first_or_create
+website_url = WebsiteUrl.where(website_id: website.id, url: "file:///app/ap.html").first_or_create
 
 webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
 webpage_element.heading_path = "#dp_content_map1 table tr td:first"

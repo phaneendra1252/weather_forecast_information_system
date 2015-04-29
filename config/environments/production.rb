@@ -88,7 +88,8 @@ Rails.application.configure do
     :user_name => ENV['USER_EMAIL'],
     :password => ENV['EMAIL_PASSWORD'],
     :authentication => 'plain',
-    :enable_starttls_auto => true
+    :enable_starttls_auto => true,
+    :openssl_verify_mode  => 'none'
   }
   Rails.application.config.middleware.use ExceptionNotification::Rack,
     :email => {
@@ -97,4 +98,3 @@ Rails.application.configure do
       :exception_recipients => [ENV['USER_EMAIL']]
     }
 end
-ActionMailer::Base.smtp_settings[:enable_starttls_auto] = false
