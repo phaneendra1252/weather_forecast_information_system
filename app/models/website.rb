@@ -19,6 +19,7 @@ class Website < ActiveRecord::Base
   end
 
   def self.parse_wfis(website_id = nil)
+    begin
     bucket = Website.s3_configuration
     websites = website_id.present? ? Website.find(website_id) : Website.all
     notifications = {}
@@ -76,6 +77,9 @@ class Website < ActiveRecord::Base
     WebsiteMailer.send_notification(@website).deliver
     attachments.each do |attachment|
       FileUtils.rm(attachment)
+    end
+    rescue Exception =>e
+      raise e.inspect
     end
   end
 
