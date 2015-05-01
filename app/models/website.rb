@@ -3,7 +3,7 @@ class Website < ActiveRecord::Base
   accepts_nested_attributes_for :website_urls, :allow_destroy => true
   validates :name, presence: true
 
-  attr_accessor :parsed_websites, :attachments
+  attr_accessor :parsed_websites, :attachments, :exception_errors
 
   has_many :visits, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :visits, :allow_destroy => true
@@ -78,8 +78,10 @@ class Website < ActiveRecord::Base
     attachments.each do |attachment|
       FileUtils.rm(attachment)
     end
-    rescue Exception =>e
-      raise e.inspect
+    rescue Exception => e
+      @website = Website.new
+      # @website.exception_errors = e.message
+      WebsiteMailer.send_errors(@website).deliver
     end
   end
 

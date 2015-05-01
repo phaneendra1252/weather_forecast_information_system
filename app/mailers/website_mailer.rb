@@ -12,4 +12,8 @@ class WebsiteMailer < ActionMailer::Base
     mail(:to => website.report_mail_ids, :subject => "Sucessfully parsed data")
   end
 
+  def send_errors(website)
+    # @error_report = website.exception_errors
+    mail(:to => website.report_mail_ids, :subject => "Error while parsing data")
+  end
 end
