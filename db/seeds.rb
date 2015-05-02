@@ -79,7 +79,7 @@ webpage_element.save
 
 # daily report start
 
-website = Website.where(name: "imd_gov_in").first_or_initialize
+website = Website.where(name: "daily_report").first_or_initialize
 website.folder_path = "/year/month/day/daily_report"
 website.save
 
