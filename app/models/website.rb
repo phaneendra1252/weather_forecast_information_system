@@ -33,6 +33,10 @@ class Website < ActiveRecord::Base
     end
   end
 
+  def self.clean_folder
+    FileUtils.rm_rf("#{Rails.root}/tmp/#{(Date.today-1).strftime('%Y')}")
+  end
+
   def self.parse_wfis(website_id = [])
     begin
     bucket = ""
@@ -40,6 +44,7 @@ class Website < ActiveRecord::Base
     websites = website_id.present? ? Website.find([website_id].flatten) : Website.all
     notifications = {}
     attachments = []
+    Website.clean_folder
     websites.each do |website|
       Website.download_from_s3_and_unzip(website, bucket)
       file_name = ""
