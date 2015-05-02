@@ -2,6 +2,8 @@ https://immense-plateau-3139.herokuapp.com/
 
 RAILS_ENV=production bin/delayed_job start
 
+heroku restart -a immense-plateau-3139
+
 rake db:drop
 rake db:create
 rake db:migrate
