@@ -14,14 +14,25 @@ class Website < ActiveRecord::Base
     Setting.where(key: "report_mail_id").map(&:value)
   end
 
-  def reports
-    Report.all
+  def reports(websites)
+    if websites.present?
+      Report.where(website_name: websites.map(&:name))
+    else
+      Report.all
+    end
   end
 
-  def self.parse_wfis(website_id = nil)
+  def self.parse_wfis_website_by_website
+    Website.all.each do |website|
+      Website.parse_wfis(website.id)
+    end
+  end
+
+  def self.parse_wfis(website_id = [])
     begin
-    bucket = Website.s3_configuration
-    websites = website_id.present? ? Website.find(website_id) : Website.all
+    bucket = ""
+    # Website.s3_configuration
+    websites = website_id.present? ? Website.find([website_id].flatten) : Website.all
     notifications = {}
     attachments = []
     websites.each do |website|
@@ -74,7 +85,7 @@ class Website < ActiveRecord::Base
       @website.parsed_websites ||= []
       @website.parsed_websites << website_name
     end
-    WebsiteMailer.send_notification(@website).deliver
+    WebsiteMailer.send_notification(@website, websites).deliver
     attachments.each do |attachment|
       FileUtils.rm(attachment)
     end
@@ -103,7 +114,7 @@ class Website < ActiveRecord::Base
   def self.zip_and_upload_on_s3(website, bucket)
     source_file_path = Website.zip_file(website)
     key = source_file_path.split("tmp/").last
-    s3_file = bucket.objects[key].write(:file => source_file_path)
+    # s3_file = bucket.objects[key].write(:file => source_file_path)
   end
 
   def self.zip_file(website)
@@ -116,18 +127,19 @@ class Website < ActiveRecord::Base
   def self.download_from_s3_and_unzip(website, bucket)
     path = Website.return_folder_path(website)
     source_file = path + ".zip"
-    key = source_file.split("tmp/").last
-    object = bucket.objects[key]
-    if object.exists?
+    # key = source_file.split("tmp/").last
+    # object = bucket.objects[key]
+    # if object.exists?
       folder_path = path.split("/")[0..-2].join("/")
+      # FileUtils.rm_rf(folder_path)
       FileUtils.mkdir_p(folder_path)
       File.open(source_file, 'wb') do |file|
-        object.read do |chunk|
-          file.write(chunk)
-        end
+        # object.read do |chunk|
+        #   file.write(chunk)
+        # end
       end
-      Website.unzip(source_file, path, true)
-    end
+      # Website.unzip(source_file, path, true)
+    # end
   end
 
   def self.return_workbook(file_name)
@@ -212,6 +224,7 @@ class Website < ActiveRecord::Base
   def self.folder_path(folder_path)
     folder_path = folder_path.gsub("year", (Date.today-1).strftime("%Y"))
     folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
+    folder_path = folder_path.gsub("day", (Date.today-1).strftime("%d"))
     folder_path = "/" + folder_path unless folder_path[0] == "/"
     folder_path = "#{Rails.root}/tmp" + folder_path
     return folder_path
@@ -631,7 +644,9 @@ class Website < ActiveRecord::Base
     reports.each_with_index do |report, index|
       columns.each_with_index do |column, column_index|
         if column == "file_name"
-          cell = sheet.add_cell(index+2, column_index, report[column].split("/").last)
+          striped_path = folder_path.gsub("#{Rails.root}/tmp/", "") + "/"
+          striped_path = report[column].gsub(striped_path, "")
+          cell = sheet.add_cell(index+2, column_index, striped_path)
         else
           cell =sheet.add_cell(index+2, column_index, report[column])
         end
