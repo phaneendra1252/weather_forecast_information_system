@@ -14,6 +14,11 @@ class Website < ActiveRecord::Base
     Setting.where(key: "report_mail_id").map(&:value)
   end
 
+  def self.test
+    website = Website.new
+    WebsiteMailer.send_errors(website)
+  end
+
   def reports(websites)
     if websites.present?
       Report.where(website_name: websites.map(&:name))
