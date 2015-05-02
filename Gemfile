@@ -35,6 +35,7 @@ gem 'aws-sdk', '< 2'
 gem 'rubyzip'
 gem 'delayed_job_active_record'
 gem 'exception_notification'
+gem 'daemons'
 group :production do
   gem 'pg'
   gem 'rails_12factor'
