@@ -92,8 +92,8 @@ webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2)):no
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr[2], tr[3]"
 webpage_element.folder_path = "/maharastra_imd_gov"
-webpage_element.file_name = "today, -1, %d/%m/%Y"
-webpage_element.sheet_name = "maharastra_imd_gov"
+webpage_element.file_name = "maharastra_imd_gov"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
 
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/apsite/apobs.html").first_or_create
@@ -105,8 +105,8 @@ webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr:nth-child(2)"
 webpage_element.folder_path = "/andhra_pradesh_imd_gov"
-webpage_element.file_name = "today, -1, %d/%m/%Y"
-webpage_element.sheet_name = "andhra_pradesh_imd_gov"
+webpage_element.file_name = "andhra_pradesh_imd_gov"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
 
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdhyderabad.gov.in/tssite/tlngobs.htm").first_or_create
@@ -118,8 +118,8 @@ webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr:nth-child(2)"
 webpage_element.folder_path = "/telangana_imd_gov"
-webpage_element.file_name = "today, -1, %d/%m/%Y"
-webpage_element.sheet_name = "telangana_imd_gov"
+webpage_element.file_name = "telangana_imd_gov"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
 
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdchennai.gov.in/obs_data.htm").first_or_create
@@ -131,69 +131,69 @@ webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr:nth-child(2)"
 webpage_element.folder_path = "/tamilnadu_imd_gov"
-webpage_element.file_name = "today, -1, %d/%m/%Y"
-webpage_element.sheet_name = "tamilnadu_imd_gov"
+webpage_element.file_name = "tamilnadu_imd_gov"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
 
-# # website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=from_date&ToDate=to_date&State=state_id&District=0&Loc=0&Time=").first_or_create
+website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=from_date&ToDate=to_date&State=state_id&District=0&Loc=0&Time=").first_or_create
 
-# # common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "from_date").first_or_initialize
-# # common_parameter.value = "today, -1, %d/%m/%Y"
-# # common_parameter.save
+common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "from_date").first_or_initialize
+common_parameter.value = "today, -1, %d/%m/%Y"
+common_parameter.save
 
-# # common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "to_date").first_or_initialize
-# # common_parameter.value = "today, -1, %d/%m/%Y"
-# # common_parameter.save
+common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "to_date").first_or_initialize
+common_parameter.value = "today, -1, %d/%m/%Y"
+common_parameter.save
 
-# # respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
+respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
 
-# # respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
-# # respective_parameter.value = "ANDHRA PRADESH"
-# # respective_parameter.save
+respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
+respective_parameter.value = "ANDHRA PRADESH"
+respective_parameter.save
 
-# # respective_parameter =  respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
-# # respective_parameter.value = "2"
-# # respective_parameter.save
+respective_parameter =  respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
+respective_parameter.value = "2"
+respective_parameter.save
 
-# # respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
+respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
 
-# # respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
-# # respective_parameter.value = "TELANGANA"
-# # respective_parameter.save
+respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
+respective_parameter.value = "TELANGANA"
+respective_parameter.save
 
-# # respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
-# # respective_parameter.value = "51"
-# # respective_parameter.save
+respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
+respective_parameter.value = "51"
+respective_parameter.save
 
-# # respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
+respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
 
-# # respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
-# # respective_parameter.value = "GUJARAT"
-# # respective_parameter.save
+respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
+respective_parameter.value = "GUJARAT"
+respective_parameter.save
 
-# # respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
-# # respective_parameter.value = "8"
-# # respective_parameter.save
+respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
+respective_parameter.value = "8"
+respective_parameter.save
 
-# # respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
+respective_parameter_group = RespectiveParameterGroup.create(website_url_id: website_url.id)
 
-# # respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
-# # respective_parameter.value = "MAHARASHTRA"
-# # respective_parameter.save
+respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_name").first_or_initialize
+respective_parameter.value = "MAHARASHTRA"
+respective_parameter.save
 
-# # respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
-# # respective_parameter.value = "16"
-# # respective_parameter.save
+respective_parameter = respective_parameter_group.respective_parameters.where(symbol: "state_id").first_or_initialize
+respective_parameter.value = "16"
+respective_parameter.save
 
-# # webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-# # webpage_element.heading_path = ""
-# # webpage_element.content_path = "#DeviceData"
-# # webpage_element.content_loop_path = "tr:not(:nth-child(1))"
-# # webpage_element.data_path = "td"
-# # webpage_element.header_path = "tr:nth-child(1)"
-# # webpage_element.file_name = "today, -1, %d/%m/%Y"
-# # webpage_element.sheet_name = "state_name_imdaws"
-# # webpage_element.save
+webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+webpage_element.heading_path = ""
+webpage_element.content_path = "#DeviceData"
+webpage_element.content_loop_path = "tr:not(:nth-child(1))"
+webpage_element.data_path = "td"
+webpage_element.header_path = "tr:nth-child(1)"
+webpage_element.file_name = "state_name_imdaws"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+webpage_element.save
 
 #daily report end last part to be corrected
 

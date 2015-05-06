@@ -16,7 +16,7 @@ class Website < ActiveRecord::Base
 
   def self.test
     website = Website.new
-    WebsiteMailer.send_errors(website)
+    WebsiteMailer.send_errors(website).deliver
   end
 
   def reports(websites)
@@ -101,6 +101,7 @@ class Website < ActiveRecord::Base
     end
     rescue Exception => e
       @website = Website.new
+      @website.parsed_websites = websites.map(&:name)
       # @website.exception_errors = e.message
       WebsiteMailer.send_errors(@website).deliver
     end
@@ -594,7 +595,7 @@ class Website < ActiveRecord::Base
     column_length = extract_data.compact.map(&:length).max
     row_length = extract_data.length
     date = Date.today - 1
-    file_name = file_name.gsub("#{Rails.root}/tmp/", "")
+    file_name = file_name.gsub("#{Rails.root}/tmp/", "").split("/")[3..-1]
     report = Report.find_by(file_name: file_name)
     if report.blank?
       Report.create(

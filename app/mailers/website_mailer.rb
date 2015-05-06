@@ -9,11 +9,13 @@ class WebsiteMailer < ActionMailer::Base
 
     @website = website
     @reports = website.reports(websites)
-    mail(:to => website.report_mail_ids, :subject => "#{Date.today-1} Sucessfully parsed data")
+    parsed_websites = @website.parsed_websites.join(", ")
+    mail(:to => website.report_mail_ids, :subject => "#{Date.today-1} Sucessfully parsed data for #{parsed_websites}")
   end
 
   def send_errors(website)
     # @error_report = website.exception_errors
-    mail(:to => website.report_mail_ids, :subject => "#{Date.today-1} Error while parsing data")
+    parsed_websites = website.parsed_websites.join(", ")
+    mail(:to => website.report_mail_ids, :subject => "#{Date.today-1} Error while parsing #{parsed_websites}")
   end
 end
