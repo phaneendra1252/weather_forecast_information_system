@@ -596,6 +596,7 @@ class Website < ActiveRecord::Base
     row_length = extract_data.length
     date = Date.today - 1
     file_name = file_name.gsub("#{Rails.root}/tmp/", "").split("/")[3..-1]
+    file_name = file_name.join("/")
     report = Report.find_by(file_name: file_name)
     if report.blank?
       Report.create(
