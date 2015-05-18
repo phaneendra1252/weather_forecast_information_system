@@ -13,7 +13,10 @@
 
 # Ignore all logfiles and tempfiles.
 /log/*.log
-/tmp
+/tmp/.gitkeep
+/tmp/cache
+/tmp/home
+/tmp/pids
 
 
 /config/initializers/app_env_vars.rb
