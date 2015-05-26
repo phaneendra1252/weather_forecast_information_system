@@ -47,7 +47,7 @@ webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.group_by_element = "District"
 webpage_element.save
 
-website_url = WebsiteUrl.where(website_id: website.id, url: "http://117.247.178.79/tsdps/soil_moisture.jsp").first_or_create
+website_url = WebsiteUrl.where(website_id: website.id, url: "http://117.247.178.102/tsdps/soil_moisture.jsp").first_or_create
 
 webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
 webpage_element.heading_path = "#dp_content_map1 table tr td:first"
@@ -61,7 +61,7 @@ webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.group_by_element = "District"
 webpage_element.save
 
-website_url = WebsiteUrl.where(website_id: website.id, url: "http://117.247.178.79/tsdps/radiationtable.jsp").first_or_create
+website_url = WebsiteUrl.where(website_id: website.id, url: "http://117.247.178.102/tsdps/radiationtable.jsp").first_or_create
 
 webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
 webpage_element.heading_path = ""
