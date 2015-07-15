@@ -3,7 +3,7 @@ class Website < ActiveRecord::Base
   accepts_nested_attributes_for :website_urls, :allow_destroy => true
   validates :name, presence: true
 
-  attr_accessor :parsed_websites, :attachments, :exception_errors
+  attr_accessor :parsed_websites, :attachments, :exception_errors, :backtrace_errors
 
   has_many :visits, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :visits, :allow_destroy => true
@@ -102,7 +102,8 @@ class Website < ActiveRecord::Base
     rescue Exception => e
       @website = Website.new
       @website.parsed_websites = websites.map(&:name)
-      # @website.exception_errors = e.message
+      @website.exception_errors = e.message
+      @website.backtrace_errors = e.backtrace
       WebsiteMailer.send_errors(@website).deliver
     end
   end

@@ -14,7 +14,8 @@ class WebsiteMailer < ActionMailer::Base
   end
 
   def send_errors(website)
-    # @error_report = website.exception_errors
+    @error_report = website.exception_errors
+    @backtrace_errors = website.backtrace_errors
     parsed_websites = website.parsed_websites.join(", ")
     mail(:to => website.report_mail_ids, :subject => "#{Date.today-1} Error while parsing #{parsed_websites}")
   end
