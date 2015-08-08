@@ -160,15 +160,12 @@ class Website < ActiveRecord::Base
     if file_presence
       folder_path = path.split("/")[0..-2].join("/")
       FileUtils.rm_rf(folder_path)
-      # key = source_file.split("tmp/").last
-      # object = bucket.objects[key]
-      # if object.exists?
-      folder_path = path.split("/")[0..-2].join("/")
-      FileUtils.rm_rf(folder_path)
       FileUtils.mkdir_p(folder_path)
-      File.open(source_file, 'wb') do |file|
-        object.read do |chunk|
-          file.write(chunk)
+      require 'open-uri'
+      File.open(source_file, "wb") do |saved_file|
+        # the following "open" is provided by open-uri
+        open("#{location}?raw=true", "rb") do |read_file|
+          saved_file.write(read_file.read)
         end
       end
       Website.unzip(source_file, path, true)
