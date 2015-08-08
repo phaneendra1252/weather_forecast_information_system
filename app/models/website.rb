@@ -125,8 +125,15 @@ class Website < ActiveRecord::Base
 
   def self.zip_and_upload_on_s3(website, bucket)
     source_file_path = Website.zip_file(website)
-    key = source_file_path.split("tmp/").last
+    # key = source_file_path.split("tmp/").last
     # s3_file = bucket.objects[key].write(:file => source_file_path)
+    require 'open3'
+    cmd1 = 'git add tmp'
+    Open3.popen3(cmd1)
+    cmd2 = "git commit -m '#{Date.today} files'"
+    Open3.popen3(cmd2)
+    cmd3 = "git push https://#{ENV['GITHUB_TOKEN']}@github.com/phaneendra1252/weather_forecast_information_system.git"
+    Open3.popen3(cmd3)
   end
 
   def self.zip_file(website)
@@ -139,19 +146,33 @@ class Website < ActiveRecord::Base
   def self.download_from_s3_and_unzip(website, bucket)
     path = Website.return_folder_path(website)
     source_file = path + ".zip"
-    # key = source_file.split("tmp/").last
+    key = source_file.split("tmp/").last
     # object = bucket.objects[key]
+    location = ENV['FILES_LOCATION'] + key
+    agent = Mechanize.new
+    file_presence = true
+    begin
+      agent.get(location)
+    rescue
+      file_presence = false
+    end
     # if object.exists?
+    if file_presence
       folder_path = path.split("/")[0..-2].join("/")
-      # FileUtils.rm_rf(folder_path)
+      FileUtils.rm_rf(folder_path)
+      # key = source_file.split("tmp/").last
+      # object = bucket.objects[key]
+      # if object.exists?
+      folder_path = path.split("/")[0..-2].join("/")
+      FileUtils.rm_rf(folder_path)
       FileUtils.mkdir_p(folder_path)
       File.open(source_file, 'wb') do |file|
-        # object.read do |chunk|
-        #   file.write(chunk)
-        # end
+        object.read do |chunk|
+          file.write(chunk)
+        end
       end
-      # Website.unzip(source_file, path, true)
-    # end
+      Website.unzip(source_file, path, true)
+    end
   end
 
   def self.return_workbook(file_name)
