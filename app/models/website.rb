@@ -127,8 +127,10 @@ class Website < ActiveRecord::Base
     source_file_path = Website.zip_file(website)
     # key = source_file_path.split("tmp/").last
     # s3_file = bucket.objects[key].write(:file => source_file_path)
+    zip_file_path = Website.zip_file_path(website)
+    commiting_file = zip_file_path.gsub("#{Rails.root}/", "")
     require 'open3'
-    cmd1 = 'git add tmp'
+    cmd1 = "git add #{commiting_file}"
     Open3.popen3(cmd1)
     cmd2 = "git commit -m '#{Date.today} files'"
     Open3.popen3(cmd2)
@@ -136,9 +138,15 @@ class Website < ActiveRecord::Base
     Open3.popen3(cmd3)
   end
 
-  def self.zip_file(website)
+  def self.zip_file_path(website)
     path = Website.return_folder_path(website)
     source_file_path = path + ".zip"
+  end
+
+  def self.zip_file(website)
+    path = Website.return_folder_path(website)
+    # source_file_path = path + ".zip"
+    source_file_path = Website.zip_file_path(website)
     Website.zip(path, source_file_path, true)
     return source_file_path
   end
@@ -631,7 +639,6 @@ class Website < ActiveRecord::Base
         column_count_difference: (column_length - 0)
       )
     else
-      # binding.pry
       if report.today_date != date
         report.yesterday_date = report.today_date
         report.yesterday_row_count = report.today_row_count
