@@ -16,7 +16,7 @@ setting.save
 # apsdps start
 
 website = Website.where(name: "apsdps").first_or_initialize
-website.folder_path = "/year/month/day/apsdps"
+website.folder_path = "/year/month/apsdps"
 website.save
 
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://apsdps.gov.in/soil_moisture.jsp").first_or_create
@@ -80,7 +80,7 @@ webpage_element.save
 # daily report start
 
 website = Website.where(name: "daily_report").first_or_initialize
-website.folder_path = "/year/month/day/daily_report"
+website.folder_path = "/year/month/daily_report"
 website.save
 
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdmumbai.gov.in/scripts/latest.asp?releaseId=EWD").first_or_create
@@ -199,7 +199,7 @@ webpage_element.save
 
 # Tamilnadu data start
 website = Website.where(name: "tamilnadu_data").first_or_initialize
-website.folder_path = "/year/month/day/tamilnadu_data"
+website.folder_path = "/year/month/tamilnadu_data"
 website.save
 visit = Visit.where(website_id: website.id, url: "http://tawn.tnau.ac.in").first_or_create
 
