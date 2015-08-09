@@ -96,9 +96,9 @@ class Website < ActiveRecord::Base
       @website.parsed_websites << website_name
     end
     WebsiteMailer.send_notification(@website, websites).deliver
-    attachments.each do |attachment|
-      FileUtils.rm(attachment)
-    end
+    # attachments.each do |attachment|
+    #   FileUtils.rm(attachment)
+    # end
     rescue Exception => e
       @website = Website.new
       @website.parsed_websites = websites.map(&:name)
