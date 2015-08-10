@@ -124,36 +124,47 @@ class Website < ActiveRecord::Base
   end
 
   def self.zip_and_upload_on_s3(website, bucket)
-    source_file_path = Website.zip_file(website)
+    # source_file_path =
+    Website.zip_file(website)
     # key = source_file_path.split("tmp/").last
     # s3_file = bucket.objects[key].write(:file => source_file_path)
     zip_file_path = Website.zip_file_path(website)
     commiting_file = zip_file_path.gsub("#{Rails.root}/", "")
     require 'open3'
-    cmd1 = "git add #{commiting_file}"
+    cmd1 = "git pull https://#{ENV['GITHUB_TOKEN']}@github.com/phaneendra1252/wfis_files.git"
     Open3.popen3(cmd1)
-    cmd2 = "git commit -m '#{Date.today} files'"
+    cmd2 = "git add #{commiting_file}"
     Open3.popen3(cmd2)
-    cmd3 = "git push https://#{ENV['GITHUB_TOKEN']}@github.com/phaneendra1252/weather_forecast_information_system.git"
+    cmd3 = "git commit -m '#{Date.today} files'"
     Open3.popen3(cmd3)
+    cmd4 = "git push https://#{ENV['GITHUB_TOKEN']}@github.com/phaneendra1252/weather_forecast_information_system.git"
+    Open3.popen3(cmd4)
   end
 
   def self.zip_file_path(website)
     path = Website.return_folder_path(website)
-    source_file_path = path + ".zip"
+    setting = Setting.where(key: "zip_file_name_#{website.id}").first_or_initialize
+    zip_file_extension = setting.value.to_s
+    source_file_path = path + zip_file_extension + ".zip"
   end
 
   def self.zip_file(website)
     path = Website.return_folder_path(website)
     # source_file_path = path + ".zip"
+    zip_file_extension = DateTime.now.strftime("%d-%m-%Y-%H-%M-%S")
+    setting = Setting.where(key: "zip_file_name_#{website.id}").first_or_initialize
+    setting.value = zip_file_extension
+    setting.save
+    #dont change it's position
     source_file_path = Website.zip_file_path(website)
     Website.zip(path, source_file_path, true)
-    return source_file_path
+    # return source_file_path
   end
 
   def self.download_from_s3_and_unzip(website, bucket)
     path = Website.return_folder_path(website)
-    source_file = path + ".zip"
+    # source_file = path + ".zip"
+    source_file = Website.zip_file_path(website)
     key = source_file.split("tmp/").last
     # object = bucket.objects[key]
     location = ENV['FILES_LOCATION'] + key
@@ -192,6 +203,7 @@ class Website < ActiveRecord::Base
   end
 
   def self.zip(dir, zip_dir, remove_after = false)
+    folder_name = dir.split("/").last.to_s
     require 'rubygems'
     require 'zip'
     require 'find'
@@ -202,7 +214,9 @@ class Website < ActiveRecord::Base
         dest = /#{dir}\/(\w.*)/.match(path)
         # Skip files if they exists
         begin
-          zipfile.add(dest[1],path) if dest
+          if dest
+            zipfile.add((folder_name + "/" + dest[1]),path)
+          end
         rescue Zip::ZipEntryExistsError
         end
       end
@@ -217,7 +231,8 @@ class Website < ActiveRecord::Base
     require 'fileutils'
     Zip::File.open(zip) do |zip_file|
       zip_file.each do |f|
-        f_path=File.join(unzip_dir, f.name)
+        # f_path=f.name
+        f_path=File.join(unzip_dir.split("/")[0..-2].join("/"), f.name)
         FileUtils.mkdir_p(File.dirname(f_path))
         zip_file.extract(f, f_path) unless File.exist?(f_path)
       end
