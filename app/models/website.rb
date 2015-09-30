@@ -1,29 +1,159 @@
+require 'google/api_client'
+require 'google/api_client/auth/file_storage'
+require 'google/api_client/auth/installed_app'
+
+API_VERSION = 'v2'
+CACHED_API_FILE = ".google-fusiontables-#{API_VERSION}.cache"
+CREDENTIAL_STORE_FILE = Rails.root.join('tmp', 'google_api_credentials.json')
+CLIENT_SECRETS_FILE = Rails.root.join('tmp', 'client_secrets.json')
+
 class Website < ActiveRecord::Base
   has_many :website_urls, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :website_urls, :allow_destroy => true
   validates :name, presence: true
 
-  attr_accessor :parsed_websites, :attachments, :exception_errors
+  attr_accessor :parsed_websites, :attachments, :exception_errors, :backtrace_errors
+  cattr_accessor :client, :drive
 
   has_many :visits, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :visits, :allow_destroy => true
 
   has_many :parsed_urls
 
+  def self.set_google_drive_connection
+    @@client = Google::APIClient.new(:application_name => 'fusion-tables-final',:application_version => '0.1.0')
+    Website.create_credential_store_file
+    Website.create_client_secrets_file
+    file_storage = Google::APIClient::FileStorage.new(CREDENTIAL_STORE_FILE)
+    if file_storage.authorization.nil?
+      client_secrets = Google::APIClient::ClientSecrets.load(CLIENT_SECRETS_FILE)
+      flow = Google::APIClient::InstalledAppFlow.new(
+        :client_id => client_secrets.client_id,
+        :client_secret => client_secrets.client_secret,
+        :scope => ['https://www.googleapis.com/auth/drive']
+      )
+      @@client.authorization = flow.authorize(file_storage)
+      Website.set_credential_record
+    else
+      @@client.authorization = file_storage.authorization
+    end
+    @@drive = @@client.discovered_api('drive', API_VERSION)
+  end
+
+  def self.create_client_secrets_file
+    client_secrets_record = Setting.where(key: "client_secrets").first
+    client_secrets_file = File.new(CLIENT_SECRETS_FILE, "w+")
+    client_secrets_file.puts(client_secrets_record.value)
+    client_secrets_file.close
+  end
+
+  def self.create_credential_store_file
+    file_storage_record = Setting.where(key: "credential_store_file")
+    if file_storage_record.present?
+      credential_store_file = File.new(CREDENTIAL_STORE_FILE, "w+")
+      credential_store_file.puts(file_storage_record.first.value)
+      credential_store_file.close
+    end
+  end
+
+  def self.set_credential_record
+    credential_store_record = Setting.where(key: "credential_store_file").first_or_initialize
+    credential_store_record.value = IO.read(CREDENTIAL_STORE_FILE)
+    credential_store_record.save
+  end
+
+  def self.upload_files_to_google_drive(source_file_path, upload_file_title)
+    result = @@client.execute(
+      api_method: @@drive.files.list,
+      parameters: {
+        q: %(title = "#{upload_file_title}")
+      }
+    )
+    existing_file = result.data['items'].first
+    mime_type = 'application/octet-stream'
+    media = Google::APIClient::UploadIO.new(source_file_path, mime_type)
+    if existing_file.present?
+      file = @@drive.files.update.request_schema.new({
+        'title' => upload_file_title,
+        'description' => upload_file_title,
+        'mimeType' => mime_type
+      })
+      result = @@client.execute(
+        :api_method => @@drive.files.update,
+        :body_object => file,
+        :media => media,
+        :parameters => {
+          'uploadType' => 'multipart',
+          'fileId' => existing_file.id,
+          'alt' => 'json'
+        }
+      )
+    else
+      file = @@drive.files.insert.request_schema.new({
+        'title' => upload_file_title,
+        'description' => upload_file_title,
+        'mimeType' => mime_type
+      })
+      result = @@client.execute(
+        :api_method => @@drive.files.insert,
+        :body_object => file,
+        :media => media,
+        :parameters => {
+          'uploadType' => 'multipart',
+          'alt' => 'json'
+        }
+      )
+    end
+  end
+
+  def self.download_files_from_google_drive(download_file_title, path, source_file)
+    result = @@client.execute(
+      api_method: @@drive.files.list,
+      parameters: {
+        q: %(title = "#{download_file_title}")
+      }
+    )
+    file = result.data['items'].first
+    if file.present?
+      download_url = file['downloadUrl']
+      result = @@client.execute(uri: download_url)
+      IO.binwrite source_file, result.body
+      Website.unzip(source_file, path, true)
+    end
+  end
+
   def report_mail_ids
     Setting.where(key: "report_mail_id").map(&:value)
   end
 
-  def reports
-    Report.all
+  def reports(websites)
+    if websites.present?
+      Report.where(website_name: websites.map(&:name))
+    else
+      Report.all
+    end
   end
 
-  def self.parse_wfis(website_id = nil)
+  def self.parse_wfis_website_by_website
+    Website.all.each do |website|
+      Website.parse_wfis(website.id)
+    end
+  end
+
+  def self.clean_folder
+    FileUtils.rm_rf("#{Rails.root}/tmp/#{(Date.today-1).strftime('%Y')}")
+  end
+
+  def self.parse_wfis(website_id = [])
+    websites = []
     begin
-    bucket = Website.s3_configuration
-    websites = website_id.present? ? Website.find(website_id) : Website.all
+    Website.set_google_drive_connection
+    bucket = nil
+    # websites = website_id.present? ? Website.find(website_id) : Website.all
+    websites = website_id.present? ? Website.find([website_id].flatten) : Website.all
     notifications = {}
     attachments = []
+    Website.clean_folder
     websites.each do |website|
       Website.download_from_s3_and_unzip(website, bucket)
       file_name = ""
@@ -52,7 +182,7 @@ class Website < ActiveRecord::Base
         end
       end
       Website.zip_and_upload_on_s3(website, bucket)
-    #   #hard coded
+      ###  hard coded
       bucket_url = "https://s3.amazonaws.com/wfisystem/"
       download_url_path = file_name.gsub("#{Rails.root}/tmp/", "")
       if download_url_path.index("xlsx")
@@ -74,13 +204,18 @@ class Website < ActiveRecord::Base
       @website.parsed_websites ||= []
       @website.parsed_websites << website_name
     end
-    WebsiteMailer.send_notification(@website).deliver
-    attachments.each do |attachment|
-      FileUtils.rm(attachment)
-    end
+    WebsiteMailer.send_notification(@website, websites).deliver
+    # WebsiteMailer.send_notification(@website).deliver
+    # attachments.each do |attachment|
+    #   FileUtils.rm(attachment)
+    # end
+      # end
     rescue Exception => e
       @website = Website.new
       # @website.exception_errors = e.message
+      @website.parsed_websites = websites.map(&:name)
+      @website.exception_errors = e.message
+      @website.backtrace_errors = e.backtrace
       WebsiteMailer.send_errors(@website).deliver
     end
   end
@@ -103,7 +238,12 @@ class Website < ActiveRecord::Base
   def self.zip_and_upload_on_s3(website, bucket)
     source_file_path = Website.zip_file(website)
     key = source_file_path.split("tmp/").last
-    s3_file = bucket.objects[key].write(:file => source_file_path)
+    upload_file_title = Website.drive_file_name(key)
+    Website.upload_files_to_google_drive(source_file_path, upload_file_title)
+  end
+
+  def self.drive_file_name(name)
+    name.gsub('/', '_')
   end
 
   def self.zip_file(website)
@@ -117,17 +257,10 @@ class Website < ActiveRecord::Base
     path = Website.return_folder_path(website)
     source_file = path + ".zip"
     key = source_file.split("tmp/").last
-    object = bucket.objects[key]
-    if object.exists?
-      folder_path = path.split("/")[0..-2].join("/")
-      FileUtils.mkdir_p(folder_path)
-      File.open(source_file, 'wb') do |file|
-        object.read do |chunk|
-          file.write(chunk)
-        end
-      end
-      Website.unzip(source_file, path, true)
-    end
+    folder_path = path.split("/")[0..-2].join("/")
+    FileUtils.mkdir_p(folder_path)
+    download_file_title = Website.drive_file_name(key)
+    Website.download_files_from_google_drive(download_file_title, path, source_file)
   end
 
   def self.return_workbook(file_name)
@@ -142,6 +275,7 @@ class Website < ActiveRecord::Base
   end
 
   def self.zip(dir, zip_dir, remove_after = false)
+    folder_name = dir.split("/").last.to_s
     require 'rubygems'
     require 'zip'
     require 'find'
@@ -152,7 +286,11 @@ class Website < ActiveRecord::Base
         dest = /#{dir}\/(\w.*)/.match(path)
         # Skip files if they exists
         begin
-          zipfile.add(dest[1],path) if dest
+# -          zipfile.add(dest[1],path) if dest
+          if dest
+            zipfile.add((folder_name + "/" + dest[1]),path)
+          end
+          # zipfile.add(dest[1],path) if dest
         rescue Zip::ZipEntryExistsError
         end
       end
@@ -167,7 +305,8 @@ class Website < ActiveRecord::Base
     require 'fileutils'
     Zip::File.open(zip) do |zip_file|
       zip_file.each do |f|
-        f_path=File.join(unzip_dir, f.name)
+        # f_path=File.join(unzip_dir, f.name)
+        f_path=File.join(unzip_dir.split("/")[0..-2].join("/"), f.name)
         FileUtils.mkdir_p(File.dirname(f_path))
         zip_file.extract(f, f_path) unless File.exist?(f_path)
       end
@@ -212,6 +351,7 @@ class Website < ActiveRecord::Base
   def self.folder_path(folder_path)
     folder_path = folder_path.gsub("year", (Date.today-1).strftime("%Y"))
     folder_path = folder_path.gsub("month", (Date.today-1).strftime("%B"))
+    folder_path = folder_path.gsub("day", (Date.today-1).strftime("%d"))
     folder_path = "/" + folder_path unless folder_path[0] == "/"
     folder_path = "#{Rails.root}/tmp" + folder_path
     return folder_path
@@ -571,7 +711,10 @@ class Website < ActiveRecord::Base
     column_length = extract_data.compact.map(&:length).max
     row_length = extract_data.length
     date = Date.today - 1
-    file_name = file_name.gsub("#{Rails.root}/tmp/", "")
+# -    file_name = file_name.gsub("#{Rails.root}/tmp/", "")
+    file_name = file_name.gsub("#{Rails.root}/tmp/", "").split("/")[3..-1]
+    file_name = file_name.join("/")
+    # file_name = file_name.gsub("#{Rails.root}/tmp/", "")
     report = Report.find_by(file_name: file_name)
     if report.blank?
       Report.create(
@@ -587,7 +730,6 @@ class Website < ActiveRecord::Base
         column_count_difference: (column_length - 0)
       )
     else
-      # binding.pry
       if report.today_date != date
         report.yesterday_date = report.today_date
         report.yesterday_row_count = report.today_row_count
@@ -631,7 +773,11 @@ class Website < ActiveRecord::Base
     reports.each_with_index do |report, index|
       columns.each_with_index do |column, column_index|
         if column == "file_name"
-          cell = sheet.add_cell(index+2, column_index, report[column].split("/").last)
+# -          cell = sheet.add_cell(index+2, column_index, report[column].split("/").last)
+          striped_path = folder_path.gsub("#{Rails.root}/tmp/", "") + "/"
+          striped_path = report[column].gsub(striped_path, "")
+          cell = sheet.add_cell(index+2, column_index, striped_path)
+          # cell = sheet.add_cell(index+2, column_index, report[column].split("/").last)
         else
           cell =sheet.add_cell(index+2, column_index, report[column])
         end

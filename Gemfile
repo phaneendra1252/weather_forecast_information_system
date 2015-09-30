@@ -42,7 +42,12 @@ group :production do
 end
 group :development do
   gem 'sqlite3'
+  gem 'pry'
 end
+
+
+gem "json"
+gem "google-api-client"
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
