@@ -78,6 +78,7 @@ class Website < ActiveRecord::Base
         'description' => upload_file_title,
         'mimeType' => mime_type
       })
+      file.parents = [{"id" => '0BzVF4wnhYHPXQk9ibjBoN0RrSzg'}]
       result = @@client.execute(
         :api_method => @@drive.files.update,
         :body_object => file,
@@ -94,6 +95,7 @@ class Website < ActiveRecord::Base
         'description' => upload_file_title,
         'mimeType' => mime_type
       })
+      file.parents = [{"id" => '0BzVF4wnhYHPXQk9ibjBoN0RrSzg'}]
       result = @@client.execute(
         :api_method => @@drive.files.insert,
         :body_object => file,
@@ -146,7 +148,7 @@ class Website < ActiveRecord::Base
 
   def self.parse_wfis(website_id = [])
     websites = []
-    begin
+    # begin
     Website.set_google_drive_connection
     bucket = nil
     # websites = website_id.present? ? Website.find(website_id) : Website.all
@@ -204,20 +206,20 @@ class Website < ActiveRecord::Base
       @website.parsed_websites ||= []
       @website.parsed_websites << website_name
     end
-    WebsiteMailer.send_notification(@website, websites).deliver
+    # WebsiteMailer.send_notification(@website, websites).deliver
     # WebsiteMailer.send_notification(@website).deliver
     # attachments.each do |attachment|
     #   FileUtils.rm(attachment)
     # end
       # end
-    rescue Exception => e
-      @website = Website.new
-      # @website.exception_errors = e.message
-      @website.parsed_websites = websites.map(&:name)
-      @website.exception_errors = e.message
-      @website.backtrace_errors = e.backtrace
-      WebsiteMailer.send_errors(@website).deliver
-    end
+    # rescue Exception => e
+    #   @website = Website.new
+    #   # @website.exception_errors = e.message
+    #   @website.parsed_websites = websites.map(&:name)
+    #   @website.exception_errors = e.message
+    #   @website.backtrace_errors = e.backtrace
+    #   WebsiteMailer.send_errors(@website).deliver
+    # end
   end
 
   def self.s3_configuration
@@ -286,11 +288,10 @@ class Website < ActiveRecord::Base
         dest = /#{dir}\/(\w.*)/.match(path)
         # Skip files if they exists
         begin
-# -          zipfile.add(dest[1],path) if dest
           if dest
-            zipfile.add((folder_name + "/" + dest[1]),path)
+            zipfile.add(dest[1],path)
+            # zipfile.add((folder_name + "/" + dest[1]),path)
           end
-          # zipfile.add(dest[1],path) if dest
         rescue Zip::ZipEntryExistsError
         end
       end
@@ -306,7 +307,8 @@ class Website < ActiveRecord::Base
     Zip::File.open(zip) do |zip_file|
       zip_file.each do |f|
         # f_path=File.join(unzip_dir, f.name)
-        f_path=File.join(unzip_dir.split("/")[0..-2].join("/"), f.name)
+        f_path=File.join(unzip_dir, f.name)
+        # f_path=File.join(unzip_dir.split("/")[0..-2].join("/"), f.name)
         FileUtils.mkdir_p(File.dirname(f_path))
         zip_file.extract(f, f_path) unless File.exist?(f_path)
       end
@@ -598,7 +600,11 @@ class Website < ActiveRecord::Base
       file_name = Website.return_file_path(k, webpage_element, respective_parameters, website)
       book = Website.return_workbook(file_name)
       sheet = Website.return_worksheet(book, sheet_name)
-      sheet.add_cell(0, 0, page.search(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+      if webpage_element.heading_path.present?
+        sheet.add_cell(0, 0, page.search(webpage_element.heading_path).text)
+      else
+        sheet.add_cell(0, 0, '')
+      end
       header_length = Website.generate_header(page, sheet, webpage_element)
       v.each_with_index do |row, tr_index|
         row.each_with_index do |td_data, td_index|
@@ -671,11 +677,11 @@ class Website < ActiveRecord::Base
         break
       end
     end
-    sheet.change_row_bold(row = 0, bolded = true)
+    # sheet.change_row_bold(row = 0, bolded = true)
     table_rows.each_with_index do |tr_data, tr_index|
-      sheet.change_row_bold(row = tr_index+1, bolded = true)
+      # sheet.change_row_bold(row = tr_index+1, bolded = true)
       # change rake task and change column names
-      sheet.change_row_fill(row = tr_index+1, font_color = '00bfff')
+      # sheet.change_row_fill(row = tr_index+1, font_color = '00bfff')
       tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
         header_content_length = td_data.text.length
         content_column_data = page.search(webpage_element.content_path).search(webpage_element.content_loop_path).search(webpage_element.data_path+":nth-child(#{(td_index+1)})")
@@ -684,9 +690,9 @@ class Website < ActiveRecord::Base
           content_column_length = content_column_data.map(&:text).map(&:length).max
         end
         if content_column_length > header_content_length && content_column_length > sheet.get_column_width(td_index)
-          sheet.change_column_width(td_index, content_column_length)
+          # sheet.change_column_width(td_index, content_column_length)
         elsif header_content_length > content_column_length && header_content_length > sheet.get_column_width(td_index)
-          sheet.change_column_width(td_index, header_content_length)
+          # sheet.change_column_width(td_index, header_content_length)
         end
         data = Website.strip_data(td_data.text)
         sheet.add_cell(tr_index + 1, td_index, data)
@@ -711,10 +717,8 @@ class Website < ActiveRecord::Base
     column_length = extract_data.compact.map(&:length).max
     row_length = extract_data.length
     date = Date.today - 1
-# -    file_name = file_name.gsub("#{Rails.root}/tmp/", "")
     file_name = file_name.gsub("#{Rails.root}/tmp/", "").split("/")[3..-1]
     file_name = file_name.join("/")
-    # file_name = file_name.gsub("#{Rails.root}/tmp/", "")
     report = Report.find_by(file_name: file_name)
     if report.blank?
       Report.create(
@@ -742,19 +746,17 @@ class Website < ActiveRecord::Base
       report.column_count_difference = (report.today_column_count - report.yesterday_column_count)
       report.save!
     end
-    Website.add_data_to_report_sheet(website)
+    # Website.add_data_to_report_sheet(website)
   end
 
   def self.add_data_to_report_sheet(website)
     folder_path = Website.return_folder_path(website)
-    # folder_path = "/year/month"
-    # folder_path = Website.folder_path(folder_path)
     website_name = website.name
     file_name = folder_path + "/" + "1_#{website_name}_report.xlsx"
     book = Website.return_workbook(file_name)
     sheet = Website.return_worksheet(book, (Date.today-1).to_s)
     sheet.add_cell(0, 0, "Weather Forecasting report")
-    sheet.change_row_fill(row = 1, font_color = '00bfff')
+    # sheet.change_row_fill(row = 1, font_color = '00bfff')
     columns = [
                 "website_name", "file_name", "yesterday_date", "today_date", "yesterday_row_count",
                 "today_row_count", "row_count_difference", "yesterday_column_count", "today_column_count",
@@ -764,20 +766,18 @@ class Website < ActiveRecord::Base
     header.each_with_index do |h, i|
       sheet.add_cell(1, i, h)
       if h == "file_name".humanize
-        sheet.change_column_width(i, 30)
+        # sheet.change_column_width(i, 30)
       else
-        sheet.change_column_width(i, h.length)
+        # sheet.change_column_width(i, h.length)
       end
     end
     reports = Report.where(website_name: website_name)
     reports.each_with_index do |report, index|
       columns.each_with_index do |column, column_index|
         if column == "file_name"
-# -          cell = sheet.add_cell(index+2, column_index, report[column].split("/").last)
           striped_path = folder_path.gsub("#{Rails.root}/tmp/", "") + "/"
           striped_path = report[column].gsub(striped_path, "")
           cell = sheet.add_cell(index+2, column_index, striped_path)
-          # cell = sheet.add_cell(index+2, column_index, report[column].split("/").last)
         else
           cell =sheet.add_cell(index+2, column_index, report[column])
         end
@@ -825,7 +825,8 @@ class Website < ActiveRecord::Base
         end
       end
     end
-    sheet.delete_column
+    sheet.delete_row(0)
+    sheet.delete_row
     sheet.merge_cells(0, 0, 0, 10)
     return sheet
   end

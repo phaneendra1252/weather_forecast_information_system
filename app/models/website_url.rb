@@ -3,7 +3,7 @@ class WebsiteUrl < ActiveRecord::Base
   has_many :common_parameters, :inverse_of => :website_url, :dependent => :destroy
   accepts_nested_attributes_for :common_parameters, :allow_destroy => true
   validates :website, presence: true
-  validates :url, :uniqueness => true, presence: true
+  validates :url, presence: true
 
   # has_one :webpage_element, through: :webpage_elements_website_urls
   # has_one :webpage_elements_website_urls
