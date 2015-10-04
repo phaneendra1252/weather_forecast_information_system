@@ -2,9 +2,9 @@ admin_role = Role.where(name: "admin").first_or_create
 moderator_role = Role.where(name: "moderator").first_or_create
 
 if User.where(email: ENV['USER_EMAIL']).blank?
-	user = User.new(name: "Surya", email: ENV['USER_EMAIL'], password: "testing123", password_confirmation: "testing123")
-	user.role_ids = [admin_role.id, moderator_role.id]
-	user.save
+  user = User.new(name: "Surya", email: ENV['USER_EMAIL'], password: "testing123", password_confirmation: "testing123")
+  user.role_ids = [admin_role.id, moderator_role.id]
+  user.save
 end
 
 setting = Setting.where(key: "report_mail_id", value: ENV['USER_EMAIL']).first_or_initialize
@@ -22,7 +22,7 @@ website.save
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://apsdps.gov.in/soil_moisture.jsp").first_or_create
 
 webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-webpage_element.heading_path = "#dp_content_map1 table tr td:first"
+webpage_element.heading_path = "#dp_content_map1 .style5.style6"
 webpage_element.content_path = "#dp_content_temp table"
 webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
@@ -50,7 +50,7 @@ webpage_element.save
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://117.247.178.102/tsdps/soil_moisture.jsp").first_or_create
 
 webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-webpage_element.heading_path = "#dp_content_map1 table tr td:first"
+webpage_element.heading_path = "#dp_content_map1 .style5.style6"
 webpage_element.content_path = "#dp_content_temp table"
 webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
@@ -86,12 +86,12 @@ website.save
 website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdmumbai.gov.in/scripts/latest.asp?releaseId=EWD").first_or_create
 
 webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-webpage_element.heading_path = "tr[1]"
+webpage_element.heading_path = "#mainTbl1 #inTable2 tr td div table[@bordercolor='white']:last tr[1]"
 webpage_element.content_path = "#mainTbl1 #inTable2 tr td div table[@bordercolor='white']:last"
 webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2)):not(:nth-child(3)):not(:nth-last-child(1))"
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr[2], tr[3]"
-webpage_element.folder_path = "/maharastra_imd_gov"
+# webpage_element.folder_path = "/maharastra_imd_gov"
 webpage_element.file_name = "maharastra_imd_gov"
 webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
@@ -104,7 +104,7 @@ webpage_element.content_path = "table"
 webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr:nth-child(2)"
-webpage_element.folder_path = "/andhra_pradesh_imd_gov"
+# webpage_element.folder_path = "/andhra_pradesh_imd_gov"
 webpage_element.file_name = "andhra_pradesh_imd_gov"
 webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
@@ -117,7 +117,7 @@ webpage_element.content_path = "table"
 webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr:nth-child(2)"
-webpage_element.folder_path = "/telangana_imd_gov"
+# webpage_element.folder_path = "/telangana_imd_gov"
 webpage_element.file_name = "telangana_imd_gov"
 webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
@@ -130,7 +130,7 @@ webpage_element.content_path = "#table1"
 webpage_element.content_loop_path = "tr:not(:nth-child(1)):not(:nth-child(2))"
 webpage_element.data_path = "td"
 webpage_element.header_path = "tr:nth-child(2)"
-webpage_element.folder_path = "/tamilnadu_imd_gov"
+# webpage_element.folder_path = "/tamilnadu_imd_gov"
 webpage_element.file_name = "tamilnadu_imd_gov"
 webpage_element.sheet_name = "today, -1, %d/%m/%Y"
 webpage_element.save
@@ -250,45 +250,45 @@ webpage_element.save
 
 # Tamilnadu data end verified
 
-# # Imdaws data start
-# website = Website.where(name: "imd_aws").first_or_initialize
-# website.folder_path = "/year/month/imd_aws"
-# website.save
-# visit = Visit.where(website_id: website.id, url: "http://www.imdaws.com/viewawsdata.aspx").first_or_create
+# Imdaws data start
+website = Website.where(name: "imd_aws").first_or_initialize
+website.folder_path = "/year/month/imd_aws"
+website.save
+visit = Visit.where(website_id: website.id, url: "http://www.imdaws.com/viewawsdata.aspx").first_or_create
 
-# visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_id").first_or_initialize
-# visit_parameter.content_path = "#CmbState"
-# visit_parameter.data_path = "option"
-# visit_parameter.data_type = "value"
-# visit_parameter.ignore_value = "0"
-# visit_parameter.save
+visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_id").first_or_initialize
+visit_parameter.content_path = "#CmbState"
+visit_parameter.data_path = "option"
+visit_parameter.data_type = "value"
+visit_parameter.ignore_value = "0"
+visit_parameter.save
 
-# visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_name").first_or_initialize
-# visit_parameter.content_path = "#CmbState"
-# visit_parameter.data_path = "option"
-# visit_parameter.data_type = "text"
-# visit_parameter.ignore_value = "All States"
-# visit_parameter.save
+visit_parameter = VisitParameter.where(visit_id: visit.id, symbol: "state_name").first_or_initialize
+visit_parameter.content_path = "#CmbState"
+visit_parameter.data_path = "option"
+visit_parameter.data_type = "text"
+visit_parameter.ignore_value = "All States"
+visit_parameter.save
 
-# website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=from_date&ToDate=to_date&State=state_id&District=0&Loc=0&Time=").first_or_create
+website_url = WebsiteUrl.where(website_id: website.id, url: "http://www.imdaws.com/WeatherAWSData.aspx?&FromDate=from_date&ToDate=to_date&State=state_id&District=0&Loc=0&Time=").first_or_create
 
-# common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "from_date").first_or_initialize
-# common_parameter.value = "today, -1, %d/%m/%Y"
-# common_parameter.save
+common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "from_date").first_or_initialize
+common_parameter.value = "today, -1, %d/%m/%Y"
+common_parameter.save
 
-# common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "to_date").first_or_initialize
-# common_parameter.value = "today, -1, %d/%m/%Y"
-# common_parameter.save
+common_parameter = CommonParameter.where(website_url_id: website_url.id, symbol: "to_date").first_or_initialize
+common_parameter.value = "today, -1, %d/%m/%Y"
+common_parameter.save
 
-# webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
-# webpage_element.heading_path = ""
-# webpage_element.content_path = "#DeviceData"
-# webpage_element.content_loop_path = "tr:not(:nth-child(1))"
-# webpage_element.data_path = "td"
-# webpage_element.header_path = "tr:nth-child(1)"
-# # webpage_element.folder_path = "/year/month/imd_aws"
-# webpage_element.file_name = "state_name"
-# webpage_element.sheet_name = "today, -1, %d/%m/%Y"
-# webpage_element.save
+webpage_element = WebpageElement.where(website_url_id: website_url.id).first_or_initialize
+webpage_element.heading_path = ""
+webpage_element.content_path = "#DeviceData"
+webpage_element.content_loop_path = "tr:not(:nth-child(1))"
+webpage_element.data_path = "td"
+webpage_element.header_path = "tr:nth-child(1)"
+# webpage_element.folder_path = "/year/month/imd_aws"
+webpage_element.file_name = "state_name"
+webpage_element.sheet_name = "today, -1, %d/%m/%Y"
+webpage_element.save
 
-# # Imdaws data end
+# Imdaws data end

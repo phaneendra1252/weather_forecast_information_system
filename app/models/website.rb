@@ -1,22 +1,131 @@
+require 'google/api_client'
+require 'google/api_client/auth/file_storage'
+require 'google/api_client/auth/installed_app'
+
+API_VERSION = 'v2'
+CACHED_API_FILE = ".google-fusiontables-#{API_VERSION}.cache"
+CREDENTIAL_STORE_FILE = Rails.root.join('tmp', 'google_api_credentials.json')
+CLIENT_SECRETS_FILE = Rails.root.join('tmp', 'client_secrets.json')
+
 class Website < ActiveRecord::Base
   has_many :website_urls, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :website_urls, :allow_destroy => true
   validates :name, presence: true
 
   attr_accessor :parsed_websites, :attachments, :exception_errors, :backtrace_errors
+  cattr_accessor :client, :drive
 
   has_many :visits, :inverse_of => :website, :dependent => :destroy
   accepts_nested_attributes_for :visits, :allow_destroy => true
 
   has_many :parsed_urls
 
-  def report_mail_ids
-    Setting.where(key: "report_mail_id").map(&:value)
+  def self.set_google_drive_connection
+    @@client = Google::APIClient.new(:application_name => 'fusion-tables-final',:application_version => '0.1.0')
+    Website.create_credential_store_file
+    Website.create_client_secrets_file
+    file_storage = Google::APIClient::FileStorage.new(CREDENTIAL_STORE_FILE)
+    if file_storage.authorization.nil?
+      client_secrets = Google::APIClient::ClientSecrets.load(CLIENT_SECRETS_FILE)
+      flow = Google::APIClient::InstalledAppFlow.new(
+        :client_id => client_secrets.client_id,
+        :client_secret => client_secrets.client_secret,
+        :scope => ['https://www.googleapis.com/auth/drive']
+      )
+      @@client.authorization = flow.authorize(file_storage)
+      Website.set_credential_record
+    else
+      @@client.authorization = file_storage.authorization
+    end
+    @@drive = @@client.discovered_api('drive', API_VERSION)
   end
 
-  def self.test
-    website = Website.new
-    WebsiteMailer.send_errors(website).deliver
+  def self.create_client_secrets_file
+    client_secrets_record = Setting.where(key: "client_secrets").first
+    client_secrets_file = File.new(CLIENT_SECRETS_FILE, "w+")
+    client_secrets_file.puts(client_secrets_record.value)
+    client_secrets_file.close
+  end
+
+  def self.create_credential_store_file
+    file_storage_record = Setting.where(key: "credential_store_file")
+    if file_storage_record.present?
+      credential_store_file = File.new(CREDENTIAL_STORE_FILE, "w+")
+      credential_store_file.puts(file_storage_record.first.value)
+      credential_store_file.close
+    end
+  end
+
+  def self.set_credential_record
+    credential_store_record = Setting.where(key: "credential_store_file").first_or_initialize
+    credential_store_record.value = IO.read(CREDENTIAL_STORE_FILE)
+    credential_store_record.save
+  end
+
+  def self.upload_files_to_google_drive(source_file_path, upload_file_title)
+    result = @@client.execute(
+      api_method: @@drive.files.list,
+      parameters: {
+        q: %(title = "#{upload_file_title}")
+      }
+    )
+    existing_file = result.data['items'].first
+    mime_type = 'application/octet-stream'
+    media = Google::APIClient::UploadIO.new(source_file_path, mime_type)
+    if existing_file.present?
+      file = @@drive.files.update.request_schema.new({
+        'title' => upload_file_title,
+        'description' => upload_file_title,
+        'mimeType' => mime_type
+      })
+      file.parents = [{"id" => '0BzVF4wnhYHPXQk9ibjBoN0RrSzg'}]
+      result = @@client.execute(
+        :api_method => @@drive.files.update,
+        :body_object => file,
+        :media => media,
+        :parameters => {
+          'uploadType' => 'multipart',
+          'fileId' => existing_file.id,
+          'alt' => 'json'
+        }
+      )
+    else
+      file = @@drive.files.insert.request_schema.new({
+        'title' => upload_file_title,
+        'description' => upload_file_title,
+        'mimeType' => mime_type
+      })
+      file.parents = [{"id" => '0BzVF4wnhYHPXQk9ibjBoN0RrSzg'}]
+      result = @@client.execute(
+        :api_method => @@drive.files.insert,
+        :body_object => file,
+        :media => media,
+        :parameters => {
+          'uploadType' => 'multipart',
+          'alt' => 'json'
+        }
+      )
+    end
+  end
+
+  def self.download_files_from_google_drive(download_file_title, path, source_file)
+    result = @@client.execute(
+      api_method: @@drive.files.list,
+      parameters: {
+        q: %(title = "#{download_file_title}")
+      }
+    )
+    file = result.data['items'].first
+    if file.present?
+      download_url = file['downloadUrl']
+      result = @@client.execute(uri: download_url)
+      IO.binwrite source_file, result.body
+      Website.unzip(source_file, path, true)
+    end
+  end
+
+  def report_mail_ids
+    Setting.where(key: "report_mail_id").map(&:value)
   end
 
   def reports(websites)
@@ -38,9 +147,11 @@ class Website < ActiveRecord::Base
   end
 
   def self.parse_wfis(website_id = [])
+    websites = []
     begin
-    bucket = ""
-    # Website.s3_configuration
+    Website.set_google_drive_connection
+    bucket = nil
+    # websites = website_id.present? ? Website.find(website_id) : Website.all
     websites = website_id.present? ? Website.find([website_id].flatten) : Website.all
     notifications = {}
     attachments = []
@@ -73,7 +184,7 @@ class Website < ActiveRecord::Base
         end
       end
       Website.zip_and_upload_on_s3(website, bucket)
-    #   #hard coded
+      ###  hard coded
       bucket_url = "https://s3.amazonaws.com/wfisystem/"
       download_url_path = file_name.gsub("#{Rails.root}/tmp/", "")
       if download_url_path.index("xlsx")
@@ -96,11 +207,13 @@ class Website < ActiveRecord::Base
       @website.parsed_websites << website_name
     end
     WebsiteMailer.send_notification(@website, websites).deliver
-    # attachments.each do |attachment|
-    #   FileUtils.rm(attachment)
-    # end
+    attachments.each do |attachment|
+      FileUtils.rm(attachment)
+    end
+      # end
     rescue Exception => e
       @website = Website.new
+      # @website.exception_errors = e.message
       @website.parsed_websites = websites.map(&:name)
       @website.exception_errors = e.message
       @website.backtrace_errors = e.backtrace
@@ -124,71 +237,31 @@ class Website < ActiveRecord::Base
   end
 
   def self.zip_and_upload_on_s3(website, bucket)
-    # source_file_path =
-    Website.zip_file(website)
-    # key = source_file_path.split("tmp/").last
-    # s3_file = bucket.objects[key].write(:file => source_file_path)
-    zip_file_path = Website.zip_file_path(website)
-    commiting_file = zip_file_path.gsub("#{Rails.root}/", "")
-    require 'open3'
-    cmd1 = "git pull https://#{ENV['GITHUB_TOKEN']}@github.com/phaneendra1252/wfis_files.git"
-    Open3.popen3(cmd1)
-    cmd2 = "git add #{commiting_file}"
-    Open3.popen3(cmd2)
-    cmd3 = "git commit -m '#{Date.today} files'"
-    Open3.popen3(cmd3)
-    cmd4 = "git push https://#{ENV['GITHUB_TOKEN']}@github.com/phaneendra1252/weather_forecast_information_system.git"
-    Open3.popen3(cmd4)
+    source_file_path = Website.zip_file(website)
+    key = source_file_path.split("tmp/").last
+    upload_file_title = Website.drive_file_name(key)
+    Website.upload_files_to_google_drive(source_file_path, upload_file_title)
   end
 
-  def self.zip_file_path(website)
-    path = Website.return_folder_path(website)
-    setting = Setting.where(key: "zip_file_name_#{website.id}").first_or_initialize
-    zip_file_extension = setting.value.to_s
-    source_file_path = path + zip_file_extension + ".zip"
+  def self.drive_file_name(name)
+    name.gsub('/', '_')
   end
 
   def self.zip_file(website)
     path = Website.return_folder_path(website)
-    # source_file_path = path + ".zip"
-    zip_file_extension = DateTime.now.strftime("%d-%m-%Y-%H-%M-%S")
-    setting = Setting.where(key: "zip_file_name_#{website.id}").first_or_initialize
-    setting.value = zip_file_extension
-    setting.save
-    #dont change it's position
-    source_file_path = Website.zip_file_path(website)
+    source_file_path = path + ".zip"
     Website.zip(path, source_file_path, true)
-    # return source_file_path
+    return source_file_path
   end
 
   def self.download_from_s3_and_unzip(website, bucket)
     path = Website.return_folder_path(website)
-    # source_file = path + ".zip"
-    source_file = Website.zip_file_path(website)
+    source_file = path + ".zip"
     key = source_file.split("tmp/").last
-    # object = bucket.objects[key]
-    location = ENV['FILES_LOCATION'] + key
-    agent = Mechanize.new
-    file_presence = true
-    begin
-      agent.get(location)
-    rescue
-      file_presence = false
-    end
-    # if object.exists?
-    if file_presence
-      folder_path = path.split("/")[0..-2].join("/")
-      FileUtils.rm_rf(folder_path)
-      FileUtils.mkdir_p(folder_path)
-      require 'open-uri'
-      File.open(source_file, "wb") do |saved_file|
-        # the following "open" is provided by open-uri
-        open("#{location}?raw=true", "rb") do |read_file|
-          saved_file.write(read_file.read)
-        end
-      end
-      Website.unzip(source_file, path, true)
-    end
+    folder_path = path.split("/")[0..-2].join("/")
+    FileUtils.mkdir_p(folder_path)
+    download_file_title = Website.drive_file_name(key)
+    Website.download_files_from_google_drive(download_file_title, path, source_file)
   end
 
   def self.return_workbook(file_name)
@@ -215,7 +288,8 @@ class Website < ActiveRecord::Base
         # Skip files if they exists
         begin
           if dest
-            zipfile.add((folder_name + "/" + dest[1]),path)
+            zipfile.add(dest[1],path)
+            # zipfile.add((folder_name + "/" + dest[1]),path)
           end
         rescue Zip::ZipEntryExistsError
         end
@@ -231,8 +305,9 @@ class Website < ActiveRecord::Base
     require 'fileutils'
     Zip::File.open(zip) do |zip_file|
       zip_file.each do |f|
-        # f_path=f.name
-        f_path=File.join(unzip_dir.split("/")[0..-2].join("/"), f.name)
+        # f_path=File.join(unzip_dir, f.name)
+        f_path=File.join(unzip_dir, f.name)
+        # f_path=File.join(unzip_dir.split("/")[0..-2].join("/"), f.name)
         FileUtils.mkdir_p(File.dirname(f_path))
         zip_file.extract(f, f_path) unless File.exist?(f_path)
       end
@@ -524,7 +599,11 @@ class Website < ActiveRecord::Base
       file_name = Website.return_file_path(k, webpage_element, respective_parameters, website)
       book = Website.return_workbook(file_name)
       sheet = Website.return_worksheet(book, sheet_name)
-      sheet.add_cell(0, 0, page.search(webpage_element.heading_path).text) if webpage_element.heading_path.present?
+      if webpage_element.heading_path.present?
+        sheet.add_cell(0, 0, page.search(webpage_element.heading_path).text)
+      else
+        sheet.add_cell(0, 0, '')
+      end
       header_length = Website.generate_header(page, sheet, webpage_element)
       v.each_with_index do |row, tr_index|
         row.each_with_index do |td_data, td_index|
@@ -597,11 +676,11 @@ class Website < ActiveRecord::Base
         break
       end
     end
-    sheet.change_row_bold(row = 0, bolded = true)
+    # sheet.change_row_bold(row = 0, bolded = true)
     table_rows.each_with_index do |tr_data, tr_index|
-      sheet.change_row_bold(row = tr_index+1, bolded = true)
+      # sheet.change_row_bold(row = tr_index+1, bolded = true)
       # change rake task and change column names
-      sheet.change_row_fill(row = tr_index+1, font_color = '00bfff')
+      # sheet.change_row_fill(row = tr_index+1, font_color = '00bfff')
       tr_data.search(webpage_element.data_path).each_with_index do |td_data, td_index|
         header_content_length = td_data.text.length
         content_column_data = page.search(webpage_element.content_path).search(webpage_element.content_loop_path).search(webpage_element.data_path+":nth-child(#{(td_index+1)})")
@@ -610,9 +689,9 @@ class Website < ActiveRecord::Base
           content_column_length = content_column_data.map(&:text).map(&:length).max
         end
         if content_column_length > header_content_length && content_column_length > sheet.get_column_width(td_index)
-          sheet.change_column_width(td_index, content_column_length)
+          # sheet.change_column_width(td_index, content_column_length)
         elsif header_content_length > content_column_length && header_content_length > sheet.get_column_width(td_index)
-          sheet.change_column_width(td_index, header_content_length)
+          # sheet.change_column_width(td_index, header_content_length)
         end
         data = Website.strip_data(td_data.text)
         sheet.add_cell(tr_index + 1, td_index, data)
@@ -666,19 +745,17 @@ class Website < ActiveRecord::Base
       report.column_count_difference = (report.today_column_count - report.yesterday_column_count)
       report.save!
     end
-    Website.add_data_to_report_sheet(website)
+    # Website.add_data_to_report_sheet(website)
   end
 
   def self.add_data_to_report_sheet(website)
     folder_path = Website.return_folder_path(website)
-    # folder_path = "/year/month"
-    # folder_path = Website.folder_path(folder_path)
     website_name = website.name
     file_name = folder_path + "/" + "1_#{website_name}_report.xlsx"
     book = Website.return_workbook(file_name)
     sheet = Website.return_worksheet(book, (Date.today-1).to_s)
     sheet.add_cell(0, 0, "Weather Forecasting report")
-    sheet.change_row_fill(row = 1, font_color = '00bfff')
+    # sheet.change_row_fill(row = 1, font_color = '00bfff')
     columns = [
                 "website_name", "file_name", "yesterday_date", "today_date", "yesterday_row_count",
                 "today_row_count", "row_count_difference", "yesterday_column_count", "today_column_count",
@@ -688,9 +765,9 @@ class Website < ActiveRecord::Base
     header.each_with_index do |h, i|
       sheet.add_cell(1, i, h)
       if h == "file_name".humanize
-        sheet.change_column_width(i, 30)
+        # sheet.change_column_width(i, 30)
       else
-        sheet.change_column_width(i, h.length)
+        # sheet.change_column_width(i, h.length)
       end
     end
     reports = Report.where(website_name: website_name)
@@ -747,7 +824,8 @@ class Website < ActiveRecord::Base
         end
       end
     end
-    sheet.delete_column
+    sheet.delete_row(0)
+    sheet.delete_row
     sheet.merge_cells(0, 0, 0, 10)
     return sheet
   end
