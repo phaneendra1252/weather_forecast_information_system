@@ -1,5 +1,5 @@
 class WebsiteMailer < ActionMailer::Base
-  default from: ENV['USER_EMAIL']
+  default from: "phaneendra1252@gmail.com"
 
   def send_notification(website, websites)
 
